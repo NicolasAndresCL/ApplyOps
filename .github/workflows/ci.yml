@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint, formato y tipos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy
+
+  test:
+    name: Tests contra PostgreSQL
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: applyops
+          POSTGRES_PASSWORD: applyops
+          POSTGRES_DB: applyops_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # Los tests de integración usan esta base; sin ella caen a SQLite en memoria.
+      DATABASE_URL_TEST: postgresql+psycopg://applyops:applyops@localhost:5432/applyops_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      # -rs muestra los skips: un test de integración saltado sería señal de que
+      # no corrió contra PostgreSQL.
+      - run: pytest -rs --cov --cov-report=term-missing --cov-fail-under=80
+
+  build:
+    name: Imagen Docker construye y arranca
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: ci-solo-para-este-job
+    steps:
+      - uses: actions/checkout@v5
+      - name: Levantar el stack y esperar los healthchecks
+        run: docker compose up -d --build --wait --wait-timeout 120
+      - name: /health responde
+        run: curl --fail --silent --show-error http://127.0.0.1:8000/health
+      - name: Logs si algo falló
+        if: failure()
+        run: docker compose logs
+      - name: Bajar el stack
+        if: always()
+        run: docker compose down -v

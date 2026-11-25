@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "applyops"
+version = "0.1.0"
+description = "Búsqueda de trabajo continua y dirigida: recolecta ofertas, las puntúa contra el perfil, adapta CV y carta y lleva el seguimiento. El clic de postular es humano."
+readme = "README.md"
+requires-python = ">=3.14"
+authors = [{ name = "Nicolás Andrés Cano Leal" }]
+dependencies = [
+    "fastapi>=0.120",
+    "uvicorn[standard]>=0.38",
+    "pydantic>=2.12",
+    "pydantic-settings>=2.11",
+    "sqlalchemy>=2.0.44",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.17",
+    "httpx>=0.28",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4",
+    "pytest-cov>=7.0",
+    "ruff>=0.14",
+    "mypy>=1.18",
+    "types-PyYAML",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "S", "N"]
+ignore = [
+    "RUF001", "RUF002", "RUF003",  # texto en español: tildes y comillas tipográficas son intencionales
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]  # assert y credenciales de prueba son normales en tests
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+mypy_path = "src"
+packages = ["applyops"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+markers = ["integracion: toca una base de datos real (SQLite o PostgreSQL según DATABASE_URL)"]
+
+[tool.coverage.run]
+source = ["applyops"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
