@@ -5,4 +5,4 @@
 set -eu
 
 alembic upgrade head
-exec uvicorn applyops.main:app --host 0.0.0.0 --port 8000 --proxy-headers
+exec uvicorn applyops.main:crear_app --factory --host 0.0.0.0 --port 8000 --proxy-headers

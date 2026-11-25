@@ -1,0 +1,75 @@
+# Criterios de búsqueda y scoring de ApplyOps.
+# Copia este archivo a perfil/busqueda.yaml (no versionado) y ajústalo.
+# El puntaje (0–100) suma cinco componentes; sus máximos están en `pesos`.
+
+# Consultas que se envían a cada fuente. Las ofertas repetidas entre consultas se deduplican.
+consultas:
+  - python
+  - backend
+  - devops
+  - sre
+  - django
+  - fastapi
+
+# Skills del perfil. peso 1–3: cuánto suma si la oferta la menciona (título o descripción).
+# Se compara sin tildes ni mayúsculas y como palabra completa.
+skills:
+  - { nombre: Python, peso: 3 }
+  - { nombre: FastAPI, peso: 2 }
+  - { nombre: Django, peso: 2, sinonimos: [DRF, django rest framework] }
+  - { nombre: PostgreSQL, peso: 2, sinonimos: [postgres] }
+  - { nombre: Docker, peso: 2, sinonimos: [docker compose, contenedores, containers] }
+  - { nombre: Kubernetes, peso: 2, sinonimos: [k8s, helm] }
+  - { nombre: Terraform, peso: 2, sinonimos: [IaC, infrastructure as code, infraestructura como código] }
+  - { nombre: SRE, peso: 2, sinonimos: [site reliability, observabilidad, observability, prometheus, grafana] }
+  - { nombre: CI/CD, peso: 1, sinonimos: [github actions, jenkins, integración continua] }
+  - { nombre: Linux, peso: 1 }
+  - { nombre: SQL, peso: 1 }
+  - { nombre: BigQuery, peso: 1 }
+  - { nombre: GCP, peso: 1, sinonimos: [google cloud] }
+  - { nombre: AWS, peso: 1 }
+  - { nombre: Automatización, peso: 1, sinonimos: [automation, automatizar, automatizaciones] }
+  - { nombre: Selenium, peso: 1, sinonimos: [scraping, playwright] }
+  - { nombre: n8n, peso: 1 }
+  - { nombre: Redis, peso: 1 }
+  - { nombre: pandas, peso: 1 }
+  - { nombre: REST, peso: 1, sinonimos: [API REST, APIs REST] }
+
+# Suma de pesos que ya da el 100 % del componente stack (evita premiar ofertas que listan todo).
+saturacion_stack: 10
+
+# Sueldo bruto mensual mínimo en USD. Las ofertas sin sueldo publicado reciben la mitad del componente.
+sueldo_minimo_usd: 1500
+
+# Fracción del componente modalidad (0–1). Lo que no aparece vale 0.
+modalidad:
+  remoto: 1.0
+  remoto_local: 1.0
+  hibrido: 0.6
+  presencial: 0.2
+
+# Países donde se acepta híbrido, presencial o remoto restringido por país.
+# Fuera de ellos, esas ofertas se descartan.
+paises_presenciales: [Chile]
+
+# Fracción del componente seniority (0–1) según lo que pide la oferta.
+seniority:
+  sin_experiencia: 0.3
+  junior: 0.8
+  semi_senior: 1.0
+  senior: 0.6
+  experto: 0.1
+
+# Idiomas de trabajo (ISO 639-1). Una oferta sin idioma especificado suma completo.
+idiomas: [es, en]
+
+# Si alguna aparece en el título, la oferta se descarta (se conserva con el motivo).
+palabras_descarte: [ventas, sales, práctica, practicante, internship]
+
+# Máximo de cada componente. Deben sumar 100.
+pesos:
+  stack: 50
+  modalidad: 20
+  sueldo: 15
+  seniority: 10
+  idioma: 5

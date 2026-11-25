@@ -1,0 +1,260 @@
+{
+ "data": [
+  {
+   "id": "semi-senior-software-engineer-python-23people-remote-f4b6",
+   "type": "job",
+   "attributes": {
+    "title": "Semi Senior Software Engineer Python",
+    "description_headline": "Requerimientos del cargo",
+    "description": "<ul><li>Dominio avanzado de Python.</li><li>Conocimientos sÃ³lidos en frameworks de JavaScript / TypeScript (React, Vue o Angular).</li><li>Manejo fluido de Git y Shell Scripting.</li><li>InglÃ©s tÃ©cnico/bÃ¡sico: Capacidad para leer documentaciÃ³n, entender requerimientos y redactar mensajes sencillos.</li></ul>",
+    "projects": "<div>Equifax es mucho mÃ¡s que una empresa de informes; es una compaÃ±Ã­a global lÃ­der en datos, analÃ­tica y tecnologÃ­a con presencia en 24 paÃ­ses. En Chile, operan desde 1979 entregando soluciones crÃ­ticas de ciberseguridad, identidad y riesgo a mÃ¡s de 14.000 empresas.</div><div>El Hub TecnolÃ³gico (SDC) Lo que hace Ãºnica a esta oportunidad es que Chile alberga el Santiago Development Center (SDC). Este centro lidera la transformaciÃ³n digital de Equifax a nivel mundial, concentrando cerca del 60% de sus desarrollos tecnolÃ³gicos globales.</div><div>Cultura y VisiÃ³n Equifax promueve un entorno de colaboraciÃ³n y excelencia tÃ©cnica, donde el talento local tiene el desafÃ­o de crear soluciones de impacto mundial. Su visiÃ³n es clara: usar la data y la tecnologÃ­a para potenciar la toma de decisiones financieras en todo el mundo.</div>",
+    "functions_headline": "Funciones del cargo",
+    "functions": "<p>Transformar un motor de IA diseÃ±ado para Chile en una plataforma escalable para toda la regiÃ³n, utilizando su dominio de <strong>Python</strong> para desacoplar la lÃ³gica local y crear arquitecturas de respuesta adaptables a los modismos y regulaciones de cada paÃ­s. </p>",
+    "benefits_headline": "Beneficios",
+    "benefits": "<ul><li><strong>Seguro complementario</strong>: Seguro de salud, vida y dental, para que estÃ©s protegido.</li><li><strong>Curso de inglÃ©s</strong>: En nuestro programa de formaciÃ³n en el idioma, ofrecemos dos modalidades para adaptarnos a tus necesidades y objetivos, con profesores nativos.</li><li><strong>Reembolso de certificaciones internacionales</strong>: Apoyamos el crecimiento profesional, por lo que te reembolsamos el costo de un examen de certificaciÃ³n internacional que quieras realizar.</li><li><strong>Bono de vacaciones</strong>: Recibe una compensaciÃ³n econÃ³mica por cada semana de vacaciones que tomes. </li><li><strong>Aguinaldos en fiestas patrias y Navidad</strong>: Un bono en septiembre y en diciembre, para que la pases bien con tu familia. </li><li><strong>DÃ­a libre de cumpleaÃ±os</strong>: Puedes tomarlo el dÃ­a previo, el mismo dÃ­a, o el posterior a tu cumpleaÃ±os. </li><li><strong>Mejora tu espacio de trabajo:</strong> Te reembolsamos parte del costo de equipar tu home office para que trabajes cÃ³modo y a gusto. </li><li><strong>Betterfly:</strong> App de bienestar que premia tus hÃ¡bitos saludables con telemedicina, psicologÃ­a y nutriciÃ³n, sin costo. </li></ul>",
+    "desirable_headline": "Deseables ",
+    "desirable": "<ul><li><strong>IA Generativa:</strong> Prompt Engineering, LangChain / LlamaIndex y arquitecturas RAG con bases vectoriales (Pinecone, pgvector).</li><li><strong>GCP:</strong> Vertex AI (Gemini), BigQuery y Cloud Run / GKE.</li><li><strong>IngenierÃ­a de Software:</strong> Docker, microservicios y CI/CD.</li><li><strong>Otros:</strong> Java Spring Boot, Jupyter Notebooks y Gemini CLI</li></ul>",
+    "remote": true,
+    "remote_modality": "remote_local",
+    "remote_zone": null,
+    "countries": [
+     "Remote"
+    ],
+    "lang": "es",
+    "category_name": "Programming",
+    "perks": [
+     "flexible_hours",
+     "life_insurance",
+     "health_coverage",
+     "dental_insurance",
+     "computer_provided",
+     "vacation_on_birthday"
+    ],
+    "min_salary": 2000,
+    "max_salary": 2200,
+    "published_at": 1795523273,
+    "response_time_in_days": {
+     "min": null,
+     "max": null
+    },
+    "applications_count": 133,
+    "location_regions": {
+     "data": []
+    },
+    "location_tenants": {
+     "data": [
+      {
+       "id": "chile",
+       "type": "country",
+       "attributes": {
+        "name": "Chile"
+       }
+      }
+     ]
+    },
+    "location_cities": {
+     "data": []
+    },
+    "modality": {
+     "data": {
+      "id": 1,
+      "type": "modality"
+     }
+    },
+    "seniority": {
+     "data": {
+      "id": 3,
+      "type": "seniority"
+     }
+    },
+    "tags": {
+     "data": [
+      {
+       "id": 18,
+       "type": "tag"
+      },
+      {
+       "id": 1,
+       "type": "tag"
+      },
+      {
+       "id": 259,
+       "type": "tag"
+      },
+      {
+       "id": 123,
+       "type": "tag"
+      },
+      {
+       "id": 135,
+       "type": "tag"
+      },
+      {
+       "id": 104,
+       "type": "tag"
+      },
+      {
+       "id": 53,
+       "type": "tag"
+      },
+      {
+       "id": 37003,
+       "type": "tag"
+      }
+     ]
+    },
+    "company": {
+     "data": {
+      "id": "23people-cl",
+      "type": "company",
+      "attributes": {
+       "name": "23people",
+       "description": "BÃ¡sicamente, somos un grupo de geeks apasionados por lo que hacemos: programar y resolver problemas usando tecnologÃ­a. ðŸ¤Ÿ",
+       "long_description": "<div><strong> En 23people ayudamos a nuestros clientes a digitalizar sus servicios, siempre con las personas en el centro. <br></strong><br></div><div>Â¿<strong>CÃ³mo lo hacemos?<br></strong><br></div><ul><li><strong>Trabajo sustentable: </strong>cuidamos cÃ³mo trabajamos y a quienes lo hacen con nosotros y sÃ­, incluso si es en modalidad <em>outsourcing. </em></li><li><strong>Agilidad de verdad: </strong>nos adaptamos rÃ¡pido, entregamos valor desde el dÃ­a uno y mejoramos tooodo el tiempo. </li><li><strong>TecnologÃ­a con criterio: </strong>la usamos de forma eficiente y creativa, y eso nos empuja a seguir creciendo profesionalmente. </li></ul><div>ðŸ’œ Â¡<strong>Nos encanta lo que hacemos!<br></strong><br></div><p>Somos especialistas JavaScript Fullstack en general. Creemos que DevOps es una forma de trabajo que debe estar siempre presente tal de lograr Continuous Delivery. Trabajamos con tecnologÃ­as de Front-end tales como ReactJS y Angular, Servicios Cloud de Amazon, Azure y Google. TambiÃ©n trabajamos en app mobile nativas y en Progressive Web App. Tenemos tambiÃ©n bastante experiencia en las tecnologÃ­as y frameworks asociados a JAVA y .NET.</p><p>One more thingâ€¦ <strong>Somos una empresa del gremio MITI: Â¡Mejor Industria TI en Chile!ðŸ˜Ž</strong></p>",
+       "projects": "<div>Equifax es mucho mÃ¡s que una empresa de informes; es una compaÃ±Ã­a global lÃ­der en datos, analÃ­tica y tecnologÃ­a con presencia en 24 paÃ­ses. En Chile, operan desde 1979 entregando soluciones crÃ­ticas de ciberseguridad, identidad y riesgo a mÃ¡s de 14.000 empresas.</div><div>El Hub TecnolÃ³gico (SDC) Lo que hace Ãºnica a esta oportunidad es que Chile alberga el Santiago Development Center (SDC). Este centro lidera la transformaciÃ³n digital de Equifax a nivel mundial, concentrando cerca del 60% de sus desarrollos tecnolÃ³gicos globales.</div><div>Cultura y VisiÃ³n Equifax promueve un entorno de colaboraciÃ³n y excelencia tÃ©cnica, donde el talento local tiene el desafÃ­o de crear soluciones de impacto mundial. Su visiÃ³n es clara: usar la data y la tecnologÃ­a para potenciar la toma de decisiones financieras en todo el mundo.</div>",
+       "benefits": "<ul><li><strong>Seguro complementario</strong>: Seguro de salud, vida y dental, para que estÃ©s protegido.</li><li><strong>Curso de inglÃ©s</strong>: En nuestro programa de formaciÃ³n en el idioma, ofrecemos dos modalidades para adaptarnos a tus necesidades y objetivos, con profesores nativos.</li><li><strong>Reembolso de certificaciones internacionales</strong>: Apoyamos el crecimiento profesional, por lo que te reembolsamos el costo de un examen de certificaciÃ³n internacional que quieras realizar.</li><li><strong>Bono de vacaciones</strong>:&nbsp; Recibe una compensaciÃ³n econÃ³mica por cada semana de vacaciones que tomes.&nbsp;</li><li><strong>Aguinaldos en fiestas patrias y Navidad</strong>:&nbsp; Un bono en septiembre y en diciembre, para que la pases bien con tu familia.&nbsp;</li><li><strong>DÃ­a libre de cumpleaÃ±os</strong>:&nbsp; Puedes tomarlo el dÃ­a previo, el mismo dÃ­a, o el posterior a tu cumpleaÃ±os.&nbsp;</li><li>&nbsp;<strong>Mejora tu espacio de trabajo:</strong> Te reembolsamos parte del costo de equipar tu home office para que trabajes cÃ³modo y a gusto.&nbsp;</li><li>&nbsp; <strong>Betterfly:</strong> App de bienestar que premia tus hÃ¡bitos saludables con telemedicina, psicologÃ­a y nutriciÃ³n, sin costo.&nbsp;</li></ul>",
+       "web": "https://www.23people.io",
+       "twitter": "",
+       "github": "",
+       "facebook": "23people",
+       "angellist": "",
+       "country": "CL",
+       "response_time_in_days": {
+        "min": 0,
+        "max": 12
+       },
+       "logo": "https://getonbrd-prod.s3.amazonaws.com/uploads/users/logo/4457/Foto_perfil_Tiktok.png"
+      }
+     }
+    }
+   },
+   "links": {
+    "public_url": "https://www.getonbrd.com/jobs/semi-senior-software-engineer-python-23people-remote-f4b6"
+   }
+  },
+  {
+   "id": "full-stack-developer-zipisa-remote",
+   "type": "job",
+   "attributes": {
+    "title": "Full-Stack Developer",
+    "description_headline": "What you bring",
+    "description": "<ul><li>4+ years building and running production web applications, across both back end and front end.</li><li>Strong Python: FastAPI or a similar framework, Pydantic, async code, and pytest.</li><li>Hands-on MongoDB: schema design, indexes, aggregation, and idempotent writes under retries and concurrency.</li><li>Strong React and TypeScript: routing, data fetching and caching, forms, and Tailwind or a component library.</li><li>Experience with third-party APIs and webhooks: OAuth, signature checks, retries, rate limits, and partial failures.</li><li>Stripe experience: subscriptions, Checkout, webhooks, and ideally usage-based billing.</li><li>Comfort deploying and debugging containers in the cloud (Cloud Run, Docker, Vercel), and reading traces and logs to find a root cause.</li><li>Good judgment with personal data and email: privacy rules, consent, and why one wrong send matters.</li><li>Clear written communication: plans on issues, PRs that explain what changed and why, and honest status.</li></ul><p>Your first 90 days<br>By day 90 you own one area of each product and can ship to either without help. 1. Days 1â€“30: Run Zipisa and WebHawk locally with their full test suites passing. Ship 3â€“5 small fixes to production in both. Learn the send guardrails, the task drains and the billing flows. 2. Days 31â€“60: Own a mid-sized feature end to end, such as a new CRM integration or a dashboard screen, from Linear plan to production. Help debug and fix production issues as they come up. 3. Days 61â€“90: Lead a cross-product piece of work, such as WebHawk visitor data inside Zipisa or metered billing. Leave a runbook or regression test behind for each incident you handle.</p>",
+    "projects": "<p>About the role<br>We're hiring a full stack developer to build and run two products that share one stack: Zipisa, an AI assistant that finds sellers and books appointments for real estate agents, and WebHawk, which identifies website visitors and turns them into leads. You'll ship across Python/FastAPI services, MongoDB, and React/TypeScript dashboards, and own features end to end, from the API through the email pipeline to the screen the customer sees. Both products send real email to real people and handle personal data and payments, so we care about safe defaults, tests, and observability as much as speed.</p><p>Zipisa- An AI inside sales agent (ISA). It sources seller-intent leads by ZIP code, emails homeowners, replies and follows up, and books appointments on the agent's calendar. WebHawk</p><p>Webhawk - Website visitor identification. A pixel on the customer's site resolves anonymous visitors into people, then delivers them to the customer's CRM and sends behavioral follow-up email. </p>",
+    "functions_headline": "What you'll do",
+    "functions": "<ul><li>Build features end to end. Take a Linear issue from plan to production: FastAPI routes, Mongo models and indexes, React screens, tests, and a clear PR.</li><li>Keep the email pipelines safe and deliverable. Work on Zipisa's mail queue and WebHawk's KumoMTA sending: idempotent jobs, send guardrails, warm-up ramps, unsubscribe handling, bounce and reply processing.</li><li>Ship and maintain integrations. Build and fix CRM and calendar connections (Follow Up Boss, kvCORE, HubSpot, Pipedrive, Salesforce, Calendly, Zapier, webhooks) and the data providers behind lead sourcing and validation.</li><li>Own billing flows. Implement Stripe subscriptions for Zipisa and metered, pay-per-use charging for WebHawk, with a usage ledger that is correct under retries.</li><li>Build the dashboards. Visitors, inbox, campaigns, domains, integrations and settings screens in React and TypeScript, wired to the API with loading, empty and error states handled.</li><li>Work on the AI layer. Wire LLM features (reply drafting, lead decisions, the in-app assistant) into the product, with evals that catch regressions before customers do.</li><li>Run what you ship. Deploy to Cloud Run and Vercel, watch Logfire traces, run scheduled task drains, debug production issues, and leave behind a regression test or runbook for every incident.</li><li>Protect personal data. Handle PII, consent signals and do-not-contact rules carefully, and keep secrets and raw payloads out of logs.</li></ul>",
+    "benefits_headline": "",
+    "benefits": "",
+    "desirable_headline": "Nice to have",
+    "desirable": "<ul><li>Email deliverability: SPF, DKIM, DMARC, mailbox warm-up, MTAs such as KumoMTA or Postfix, and reading bounce and complaint signals.</li><li>LLM product work: prompt design, tool-using agents, evals, and controlling cost per conversation.</li><li>Real estate tech: Follow Up Boss, kvCORE/BoldTrail, MLS data, or how agents and brokerages work leads.</li><li>Ad-tech or identity resolution: pixels, first-party data, consent signals such as GPC, and match rates.</li><li>TanStack Start or Next.js, server-side rendering, and technical or programmatic SEO.</li><li>Infrastructure: Cloudflare (Workers, R2, cron), Redis, queues, Terraform, or running a Linux box.</li><li>Experience as an early engineer at a startup, owning a product with little hand-holding.</li><li>Daily use of AI coding agents such as Claude Code, with the habit of reviewing their work skeptically.</li></ul>",
+    "remote": true,
+    "remote_modality": "fully_remote",
+    "remote_zone": null,
+    "countries": [
+     "Remote"
+    ],
+    "lang": "en",
+    "category_name": "Programming",
+    "perks": [
+     "remote_full"
+    ],
+    "min_salary": 2200,
+    "max_salary": 3500,
+    "published_at": 1794490311,
+    "response_time_in_days": {
+     "min": null,
+     "max": null
+    },
+    "applications_count": 529,
+    "location_regions": {
+     "data": []
+    },
+    "location_tenants": {
+     "data": []
+    },
+    "location_cities": {
+     "data": []
+    },
+    "modality": {
+     "data": {
+      "id": 1,
+      "type": "modality"
+     }
+    },
+    "seniority": {
+     "data": {
+      "id": 4,
+      "type": "seniority"
+     }
+    },
+    "tags": {
+     "data": [
+      {
+       "id": 18,
+       "type": "tag"
+      },
+      {
+       "id": 829,
+       "type": "tag"
+      },
+      {
+       "id": 133,
+       "type": "tag"
+      },
+      {
+       "id": 123,
+       "type": "tag"
+      },
+      {
+       "id": 259,
+       "type": "tag"
+      },
+      {
+       "id": 1023,
+       "type": "tag"
+      },
+      {
+       "id": 141,
+       "type": "tag"
+      },
+      {
+       "id": 38629,
+       "type": "tag"
+      }
+     ]
+    },
+    "company": {
+     "data": {
+      "id": "zipisa",
+      "type": "company",
+      "attributes": {
+       "name": "ZipISA",
+       "description": "We're hiring a full stack developer to build and run two products that share one stack: Zipisa, an AI assistant that finds sellers and books appointments for real estate agents, and WebHawk, which identifies website visitors and turns them into leads. ",
+       "long_description": "",
+       "projects": null,
+       "benefits": null,
+       "web": "https://zipisa.com",
+       "twitter": null,
+       "github": null,
+       "facebook": null,
+       "angellist": null,
+       "country": "US",
+       "response_time_in_days": {
+        "min": null,
+        "max": null
+       },
+       "logo": "https://getonbrd-prod.s3.amazonaws.com/uploads/users/logo/21148/ZipISA_logo.png"
+      }
+     }
+    }
+   },
+   "links": {
+    "public_url": "https://www.getonbrd.com/jobs/full-stack-developer-zipisa-remote"
+   }
+  }
+ ],
+ "meta": {
+  "page": 1,
+  "per_page": 2,
+  "total_pages": 1
+ }
+}
