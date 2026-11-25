@@ -1,0 +1,152 @@
+"""API HTTP con el contenedor armado con fakes: contrato de respuestas y errores.
+
+Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterator
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from applyops import __version__
+from applyops.adapters.inbound.api.contenedor import Contenedor
+from applyops.application.consultar import ConsultarOfertas
+from applyops.application.recolectar import RecolectarOfertas
+from applyops.domain.errores import ApplyOpsError, RecoleccionEnCursoError
+from applyops.main import crear_app
+from tests.fakes import AHORA, FuenteFalsa, RepoEnMemoria, un_perfil, una_oferta
+
+
+def _app(repo: RepoEnMemoria, fuentes: list[FuenteFalsa] | None = None) -> FastAPI:
+    recolectar = RecolectarOfertas(fuentes or [], repo, un_perfil(), reloj=lambda: AHORA)
+    return crear_app(Contenedor(recolectar, ConsultarOfertas(repo), repo))
+
+
+@pytest.fixture
+def repo() -> RepoEnMemoria:
+    return RepoEnMemoria()
+
+
+@pytest.fixture
+def cliente(repo: RepoEnMemoria) -> Iterator[TestClient]:
+    fuente = FuenteFalsa(
+        "falsa",
+        {
+            "python": [
+                una_oferta(),
+                una_oferta(id_externo="2", titulo="Ventas Python"),  # descartada
+                una_oferta(
+                    id_externo="3", descripcion="Figma", sueldo_max_usd=None, sueldo_min_usd=None
+                ),
+            ]
+        },
+    )
+    with TestClient(_app(repo, [fuente]), raise_server_exceptions=False) as c:
+        yield c
+
+
+def test_health(cliente: TestClient) -> None:
+    assert cliente.get("/health").json() == {"estado": "ok", "version": __version__}
+
+
+def test_ready_ok_y_degradado() -> None:
+    with TestClient(_app(RepoEnMemoria(disponible=True))) as c:
+        assert c.get("/ready").status_code == 200
+    with TestClient(_app(RepoEnMemoria(disponible=False))) as c:
+        respuesta = c.get("/ready")
+    assert respuesta.status_code == 503
+    assert respuesta.json() == {"estado": "degradado", "base_de_datos": False}
+
+
+def test_recolectar_y_listar_priorizado(cliente: TestClient) -> None:
+    resumen = cliente.post("/recolecciones").json()
+    assert resumen["total_nuevas"] == 3
+    assert resumen["resultados"] == [
+        {"fuente": "falsa", "encontradas": 3, "nuevas": 3, "error": None}
+    ]
+
+    bandeja = cliente.get("/ofertas").json()
+    assert [o["clave"] for o in bandeja] == ["falsa:1", "falsa:3"]
+    assert bandeja[0]["puntaje"] > bandeja[1]["puntaje"]
+
+    con_descartadas = cliente.get("/ofertas", params={"incluir_descartadas": True}).json()
+    assert len(con_descartadas) == 3
+
+
+def test_filtros_validados(cliente: TestClient) -> None:
+    cliente.post("/recolecciones")
+    assert len(cliente.get("/ofertas", params={"min_puntaje": 90}).json()) == 1
+    assert len(cliente.get("/ofertas", params={"limite": 1}).json()) == 1
+    assert cliente.get("/ofertas", params={"min_puntaje": 101}).status_code == 422
+
+
+def test_detalle_trae_desglose(cliente: TestClient) -> None:
+    cliente.post("/recolecciones")
+    detalle = cliente.get("/ofertas/falsa:1").json()
+    assert detalle["puntaje"] == 95
+    assert [c["nombre"] for c in detalle["componentes"]] == [
+        "stack",
+        "modalidad",
+        "sueldo",
+        "seniority",
+        "idioma",
+    ]
+    assert detalle["descripcion"].startswith("Buscamos")
+
+
+def test_oferta_inexistente_responde_404_con_contrato_de_error(cliente: TestClient) -> None:
+    respuesta = cliente.get("/ofertas/falsa:nope")
+    assert respuesta.status_code == 404
+    assert respuesta.json() == {
+        "error": {"codigo": "oferta_no_encontrada", "mensaje": "No existe la oferta 'falsa:nope'"}
+    }
+
+
+def test_recoleccion_en_curso_responde_409(repo: RepoEnMemoria) -> None:
+    class RecolectarOcupado(RecolectarOfertas):
+        def ejecutar(self) -> object:  # type: ignore[override]
+            raise RecoleccionEnCursoError
+
+    ocupado = RecolectarOcupado([], repo, un_perfil(), reloj=lambda: AHORA)
+    app = crear_app(Contenedor(ocupado, ConsultarOfertas(repo), repo))
+    with TestClient(app) as c:
+        respuesta = c.post("/recolecciones")
+    assert respuesta.status_code == 409
+    assert respuesta.json()["error"]["codigo"] == "recoleccion_en_curso"
+
+
+def test_error_de_dominio_sin_mapeo_y_error_inesperado_son_500(repo: RepoEnMemoria) -> None:
+    class RepoRoto(RepoEnMemoria):
+        def __init__(self, error: Exception) -> None:
+            super().__init__()
+            self._error = error
+
+        def listar(self, filtro: object) -> list[object]:  # type: ignore[override]
+            raise self._error
+
+    for error in (ApplyOpsError("x"), RuntimeError("detalle interno")):
+        roto = RepoRoto(error)
+        app = crear_app(
+            Contenedor(
+                RecolectarOfertas([], roto, un_perfil(), reloj=lambda: AHORA),
+                ConsultarOfertas(roto),
+                roto,
+            )
+        )
+        with TestClient(app, raise_server_exceptions=False) as c:
+            respuesta = c.get("/ofertas")
+        assert respuesta.status_code == 500
+        assert respuesta.json()["error"]["codigo"] == "error_interno"
+        assert "detalle interno" not in respuesta.text, "el stack no sale al cliente"
+
+
+def test_correlation_id_se_respeta_o_se_genera(cliente: TestClient) -> None:
+    propio = cliente.get("/health", headers={"X-Correlation-ID": "n8n-123"})
+    assert propio.headers["X-Correlation-ID"] == "n8n-123"
+
+    invalido = cliente.get("/health", headers={"X-Correlation-ID": "id con espacios"})
+    assert invalido.headers["X-Correlation-ID"] != "id con espacios"
+    assert len(cliente.get("/health").headers["X-Correlation-ID"]) == 12
