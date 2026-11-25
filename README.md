@@ -1,12 +1,12 @@
 # ApplyOps — búsqueda de trabajo continua, dirigida y con el clic final humano
 
 [![CI](https://github.com/NicolasAndresCL/ApplyOps/actions/workflows/ci.yml/badge.svg)](https://github.com/NicolasAndresCL/ApplyOps/actions/workflows/ci.yml)
-![Versión](https://img.shields.io/badge/versi%C3%B3n-0.3.0-blue)
+![Versión](https://img.shields.io/badge/versi%C3%B3n-0.3.1-blue)
 ![Python](https://img.shields.io/badge/python-3.14-3776AB)
 
 | | |
 |---|---|
-| **Versión** | 0.3.0 |
+| **Versión** | 0.3.1 |
 | **Fecha** | 25 de noviembre de 2026 |
 | **Autor** | [Nicolás Andrés Cano Leal](#autor) |
 
@@ -122,7 +122,7 @@ python -m applyops.adapters.inbound.ui.main               # UI en :8080 (otra te
 |---|---|---|
 | GET | `/health` | Vivo: responde sin tocar dependencias. |
 | GET | `/ready` | Listo: 200 si la base responde, 503 si no. |
-| GET | `/ofertas` | Bandeja priorizada. Query: `min_puntaje` (0–100), `incluir_descartadas`, `limite` (1–500). |
+| GET | `/ofertas` | Bandeja priorizada. Query: `min_puntaje` (0–100), `incluir_descartadas`, `incluir_vencidas`, `limite` (1–500). |
 | GET | `/ofertas/{clave}` | Detalle con descripción y desglose del puntaje. |
 | POST | `/ofertas` | Carga a mano una oferta (LinkedIn, Indeed…); 201 con la oferta puntuada. La misma URL actualiza. |
 | POST | `/recolecciones` | Recolecta de todas las fuentes y devuelve el resumen por fuente. |
@@ -139,6 +139,7 @@ Todo error tiene la misma forma; el cliente distingue por `codigo`:
 | `recoleccion_en_curso` | 409 | Ya hay una recolección corriendo (manual o programada). |
 | `entrada_invalida` | 422 | El cuerpo no cumple el esquema (URL mal formada, campo faltante…). |
 | `oferta_invalida` | 422 | Los datos violan una regla de la oferta (sueldo mínimo mayor que el máximo). |
+| `ruta_no_encontrada` / `metodo_no_permitido` | 404 / 405 | La ruta o el método no existen. |
 | `error_interno` | 500 | Bug: el detalle va al log, nunca a la respuesta. |
 
 Cada respuesta trae `X-Correlation-ID` (se respeta el que envíe el cliente) y los logs JSON lo incluyen.
@@ -172,6 +173,10 @@ Un dato **no publicado** (sueldo, seniority, modalidad) recibe la **mitad** del 
 ofertas de Get on Board no publica sueldo. Se **descarta** (total 0, con motivo y desglose) la oferta con
 una palabra excluida en el título, o híbrida/presencial/remota-local fuera de `paises_presenciales`.
 
+**Vencimiento:** cuando una fuente responde completa, sus ofertas guardadas que ya no aparecen se marcan
+vencidas y salen de la bandeja (probablemente se cerraron); si reaparecen, vuelven. Con una respuesta
+parcial no se vence nada, y las ofertas cargadas a mano nunca vencen.
+
 ## Variables de entorno
 
 | Variable | Servicio | Por defecto | Para qué |
@@ -198,7 +203,7 @@ nuevo con Python 3.14 (el runner solo ve lo versionado):
 
 1. `ruff check` y `ruff format --check`.
 2. `mypy` estricto (con el plugin de Pydantic).
-3. `pytest` con cobertura mínima del **80 %**: hoy **170 tests, 98,3 %**, en ~14 s. En CI los de
+3. `pytest` con cobertura mínima del **80 %**: hoy **200 tests, 98,3 %**, en ~14 s. En CI los de
    integración corren contra **PostgreSQL 16** (`DATABASE_URL_TEST`); en local, contra SQLite si no está
    definida. El esquema de prueba se crea **con las migraciones**, y un test compara modelos y
    migraciones. Los de la UI usan el `User` simulado de NiceGUI hablando por `httpx.ASGITransport` con la
@@ -223,8 +228,8 @@ corrida con **0 nuevas** (idempotente).
   `"Remote"` en `countries`; leído como país, descartaba 62 de 239 ofertas.
 - **Toda salida a la red tiene timeout**, también la conexión a PostgreSQL: sin `connect_timeout`,
   `/ready` tardaba 130 s con la base caída en vez de responder 503.
-- **Degradar en vez de fallar.** Una fuente caída se informa en el resumen y en el log, y el ciclo
-  sigue con las demás ([runbook](docs/runbooks/fuente-sin-datos.md)).
+- **Degradar en vez de fallar.** Una consulta caída se informa en el resumen y en el log, se guarda
+  lo que sí respondió y el ciclo sigue con las demás fuentes ([runbook](docs/runbooks/fuente-sin-datos.md)).
 - **La UI es un cliente más de la API.** Corre en otro proceso y solo habla HTTP: el mismo backend
   sirve a n8n o a otro front, y la UI se puede reemplazar sin tocar el dominio.
 - **Las imágenes con derechos de autor no entran al repo.** Los temas versionan sus colores y su CSS;
@@ -241,4 +246,4 @@ Backend Engineer → SRE | Python · Django · Kubernetes · Terraform · CI/CD
 - Portafolio: [nicolasandrescl.github.io](https://nicolasandrescl.github.io/)
 - Correo: [nicolas.cano.leal@gmail.com](mailto:nicolas.cano.leal@gmail.com)
 
-ApplyOps v0.3.0 · 25 de noviembre de 2026
+ApplyOps v0.3.1 · 25 de noviembre de 2026
