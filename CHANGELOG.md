@@ -6,6 +6,16 @@ Todos los cambios relevantes de ApplyOps. Formato
 
 ## [Sin publicar]
 
+### Añadido
+- (minor) **Filtro por idioma** en la bandeja y en `GET /ofertas?idioma=` (`es`, `en`, `pt` o `no_indica`
+  para las que no lo publican). La bandeja suma la columna Idioma y el detalle, su píldora; con el filtro
+  puesto y sin resultados, la bandeja lo dice en vez de sugerir recolectar.
+- (minor) **Tema 💠 Cian**, con la paleta del portafolio (`#22D3EE` sobre azul noche): fondo aurora,
+  degradado cian → índigo → magenta en marca, títulos y menú activo, y glow en las tarjetas. Sin imágenes.
+
+### Cambiado
+- `GET /ofertas` devuelve `idioma` en cada oferta (antes solo el detalle). Campo nuevo: compatible.
+
 ## [0.3.1] — 2026-11-25
 
 Correcciones de la revisión automática (Sourcery) del PR #3.
