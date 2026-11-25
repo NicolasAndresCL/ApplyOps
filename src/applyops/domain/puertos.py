@@ -46,14 +46,31 @@ class FuenteOfertas(Protocol):
         ...
 
 
+# Valor de `FiltroOfertas.idioma` para las ofertas que no indican idioma.
+IDIOMA_NO_INDICA = "no_indica"
+
+
 @dataclass(frozen=True, slots=True)
 class FiltroOfertas:
-    """Criterios de listado. `limite` acota la respuesta para no traer la tabla entera."""
+    """Criterios de listado. `limite` acota la respuesta para no traer la tabla entera.
+
+    `idioma`: código ISO 639-1 que pide la oferta (`es`, `en`, `pt`),
+    `IDIOMA_NO_INDICA` para las que no lo publican, o `None` para no filtrar.
+    """
 
     min_puntaje: int = 0
     incluir_descartadas: bool = False
     incluir_vencidas: bool = False
+    idioma: str | None = None
     limite: int = 50
+
+    def acepta_idioma(self, idioma: str | None) -> bool:
+        """Regla del filtro de idioma, compartida por los repositorios."""
+        if self.idioma is None:
+            return True
+        if self.idioma == IDIOMA_NO_INDICA:
+            return idioma is None
+        return idioma == self.idioma
 
 
 class RepoOfertas(Protocol):

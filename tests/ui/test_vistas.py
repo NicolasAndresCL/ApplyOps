@@ -57,6 +57,19 @@ async def test_ver_descartadas(usuario: User, repo: RepoEnMemoria) -> None:
     assert filas[-1]["descarte"] == "El título contiene «ventas»"
 
 
+async def test_filtro_de_idioma(usuario: User) -> None:
+    await usuario.open("/")
+    usuario.find(marker="recolectar").click()
+    await usuario.should_see("3 nuevas")
+    filtro = next(iter(usuario.find(marker="filtro-idioma").elements))
+    assert isinstance(filtro, ui.select)
+    filtro.value = "en"  # las ofertas falsas piden español
+    await usuario.should_see("Ninguna oferta pide ese idioma")
+    filtro.value = "es"
+    filas = await _esperar_filas(usuario, 2)
+    assert {f["idioma"] for f in filas} == {"Español"}
+
+
 async def test_detalle_muestra_desglose_y_el_clic_es_humano(
     usuario: User, repo: RepoEnMemoria
 ) -> None:

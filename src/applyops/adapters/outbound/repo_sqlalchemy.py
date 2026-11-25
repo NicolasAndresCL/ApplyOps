@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from applyops.adapters.outbound.modelos_sqlalchemy import OfertaFila
 from applyops.domain.errores import OfertaNoEncontradaError
 from applyops.domain.oferta import Modalidad, Oferta, Seniority
-from applyops.domain.puertos import FiltroOfertas
+from applyops.domain.puertos import IDIOMA_NO_INDICA, FiltroOfertas
 from applyops.domain.scoring import Componente, OfertaPuntuada, Puntaje
 
 
@@ -77,6 +77,10 @@ class RepoOfertasSqlAlchemy:
             consulta = consulta.where(OfertaFila.descarte.is_(None))
         if not filtro.incluir_vencidas:
             consulta = consulta.where(OfertaFila.vencida_en.is_(None))
+        if filtro.idioma == IDIOMA_NO_INDICA:
+            consulta = consulta.where(OfertaFila.idioma.is_(None))
+        elif filtro.idioma is not None:
+            consulta = consulta.where(OfertaFila.idioma == filtro.idioma)
         consulta = consulta.order_by(
             OfertaFila.puntaje.desc(),
             OfertaFila.publicada_en.desc().nulls_last(),

@@ -150,6 +150,7 @@ class RepoEnMemoria:
             if p.puntaje.total >= filtro.min_puntaje
             and (filtro.incluir_descartadas or not p.puntaje.descartada)
             and (filtro.incluir_vencidas or p.vencida_en is None)
+            and filtro.acepta_idioma(p.oferta.idioma)
         ]
         filas.sort(key=lambda p: (-p.puntaje.total, p.oferta.clave))
         return filas[: filtro.limite]
