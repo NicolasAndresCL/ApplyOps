@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "applyops"
-version = "0.2.0"
+version = "0.3.0"
 description = "Búsqueda de trabajo continua y dirigida: recolecta ofertas, las puntúa contra el perfil, adapta CV y carta y lleva el seguimiento. El clic de postular es humano."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -19,12 +19,14 @@ dependencies = [
     "alembic>=1.17",
     "httpx>=0.28",
     "pyyaml>=6.0",
+    "nicegui>=4.1",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.4",
     "pytest-cov>=7.0",
+    "pytest-asyncio>=1.0",
     "ruff>=0.14",
     "mypy>=1.18",
     "types-PyYAML",
@@ -46,6 +48,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106"]  # assert y credenciales de prueba son normales en tests
+"src/applyops/adapters/inbound/ui/temas/**" = ["E501"]  # CSS portado de Jaime: reglas largas legibles en una línea
 
 [tool.mypy]
 python_version = "3.14"
@@ -58,7 +61,10 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "-ra"
+addopts = "-ra -p nicegui.testing.user_plugin"
+asyncio_mode = "auto"
+# Los tests de UI montan la raíz con user_simulation(root=...): no hay archivo principal.
+main_file = ""
 markers = ["integracion: toca una base de datos real (SQLite o PostgreSQL según DATABASE_URL)"]
 
 [tool.coverage.run]

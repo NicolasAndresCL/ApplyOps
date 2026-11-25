@@ -10,11 +10,43 @@ Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from applyops.application.recolectar import ResumenRecoleccion
+from applyops.application.registrar_manual import DatosOfertaManual
+from applyops.domain.oferta import Modalidad, Seniority
 from applyops.domain.scoring import OfertaPuntuada
+
+
+class OfertaManualEntrada(BaseModel):
+    """Oferta copiada a mano de un portal sin API. URL, título, empresa y texto son obligatorios."""
+
+    url: str = Field(min_length=10, max_length=1000, pattern=r"^https?://\S+$")
+    titulo: str = Field(min_length=2, max_length=300)
+    empresa: str = Field(min_length=1, max_length=200)
+    descripcion: str = Field(min_length=20, max_length=50_000)
+    modalidad: Modalidad = Modalidad.DESCONOCIDA
+    paises: list[str] = Field(default_factory=list, max_length=20)
+    sueldo_min_usd: int | None = Field(default=None, ge=0, le=100_000)
+    sueldo_max_usd: int | None = Field(default=None, ge=0, le=100_000)
+    seniority: Seniority | None = None
+    idioma: Literal["es", "en", "pt"] | None = None
+
+    def a_datos(self) -> DatosOfertaManual:
+        return DatosOfertaManual(
+            url=self.url,
+            titulo=self.titulo,
+            empresa=self.empresa,
+            descripcion=self.descripcion,
+            modalidad=self.modalidad,
+            paises=tuple(self.paises),
+            sueldo_min_usd=self.sueldo_min_usd,
+            sueldo_max_usd=self.sueldo_max_usd,
+            seniority=self.seniority,
+            idioma=self.idioma,
+        )
 
 
 class ComponenteSalida(BaseModel):

@@ -61,9 +61,11 @@ try {
         $env:COMPOSE_PROJECT_NAME = 'applyops-ci-local'
         $env:DB_PUERTO_HOST = '5443'
         $env:API_PUERTO_HOST = '8010'
+        $env:UI_PUERTO_HOST = '8020'
         try {
             Invoke-Paso 'docker compose up --wait' { docker compose up -d --build --wait --wait-timeout 180 }
             Invoke-Paso '/health'                  { curl.exe --fail --silent --show-error http://127.0.0.1:8010/health }
+            Invoke-Paso 'UI responde'              { curl.exe --fail --silent --show-error --output NUL http://127.0.0.1:8020/ajustes }
         } finally {
             docker compose down -v 2>&1 | Out-Null
         }

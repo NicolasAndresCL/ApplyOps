@@ -6,6 +6,32 @@ Todos los cambios relevantes de ApplyOps. Formato
 
 ## [Sin publicar]
 
+## [0.3.0] — 2026-11-25
+
+### Añadido
+- **Interfaz web con NiceGUI 4**, en un proceso aparte que consume la API por HTTP (servicio `ui` en
+  Docker Compose, puerto 8080):
+  - **Bandeja** priorizada con color por tramo, filtro de puntaje mínimo, «Ver descartadas» y
+    **Recolectar ahora**.
+  - **Detalle** con el desglose del puntaje por componente y **Abrir la oferta para postular** (el clic
+    final sigue siendo humano).
+  - **Cargar oferta** a mano para portales sin API (LinkedIn, Indeed, Laborum).
+  - **Ajustes**: tema recordado por navegador y estado de la API y de la base.
+  - Si la API no responde, cada vista lo muestra con **Reintentar**.
+- **Temas copiados de Jaime**: Mugiwara y Gear 5 (Luffy), Esmeralda (Zoro) y Shingeki (Eren), con sus
+  paletas, cristal, tipografías, figura y emblema del personaje, y efectos (Haki del Rey, rayo y vapor del
+  titán). Cambian en vivo, sin recargar.
+- `scripts/importar_temas_jaime.ps1`: copia desde Jaime las imágenes de los temas a `assets/temas/`
+  (en `.gitignore`: tienen derechos de autor).
+- `POST /ofertas`: alta manual de una oferta, puntuada al guardar. La clave sale de la URL sin
+  parámetros de rastreo, así la misma oferta copiada dos veces se actualiza en vez de duplicarse.
+- El job de build del CI y `ci_local.ps1` verifican que la UI arranca y responde.
+
+### Cambiado
+- Los errores de validación (422) usan el contrato único `{"error": {"codigo": "entrada_invalida", …}}`
+  en lugar del `{"detail": […]}` de FastAPI.
+- La imagen Docker crea `/app/.nicegui` con permisos del usuario no-root.
+
 ## [0.2.0] — 2026-11-25
 
 ### Añadido

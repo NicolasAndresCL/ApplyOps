@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, Query
 from applyops.adapters.inbound.api.contenedor import Contenedor, obtener_contenedor
 from applyops.adapters.inbound.api.esquemas import (
     OfertaDetalleSalida,
+    OfertaManualEntrada,
     OfertaResumenSalida,
     RespuestaError,
 )
@@ -38,6 +39,17 @@ def listar_ofertas(
         min_puntaje=min_puntaje, incluir_descartadas=incluir_descartadas, limite=limite
     )
     return [OfertaResumenSalida.desde(p) for p in contenedor.consultar.listar(filtro)]
+
+
+@router.post("", status_code=201, responses={422: {"model": RespuestaError}})
+def registrar_oferta(
+    entrada: OfertaManualEntrada, contenedor: ContenedorDep
+) -> OfertaDetalleSalida:
+    """Carga a mano una oferta de un portal sin API y la devuelve ya puntuada.
+
+    La misma URL (sin parámetros de rastreo) actualiza la oferta en vez de duplicarla.
+    """
+    return OfertaDetalleSalida.desde(contenedor.registrar.ejecutar(entrada.a_datos()))
 
 
 @router.get("/{clave}", responses={404: {"model": RespuestaError}})
