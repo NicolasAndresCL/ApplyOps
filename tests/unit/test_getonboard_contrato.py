@@ -117,7 +117,8 @@ def test_texto_plano_quita_html_y_entidades() -> None:
 def test_buscar_pagina_hasta_total_pages(respuesta_real: dict[str, Any]) -> None:
     pagina = {**respuesta_real, "meta": {"page": 1, "per_page": 3, "total_pages": 2}}
     fuente, pedidos = _fuente([pagina, pagina])
-    ofertas = fuente.buscar("python")
+    resultado = fuente.buscar("python")
+    ofertas = resultado.ofertas
 
     assert len(ofertas) == 6
     assert len(pedidos) == 2
@@ -139,7 +140,8 @@ def test_oferta_rota_se_omite_sin_tumbar_la_pagina(respuesta_real: dict[str, Any
     del respuesta_real["data"][1]["attributes"]["title"]
     respuesta_real["meta"]["total_pages"] = 1
     fuente, _ = _fuente([respuesta_real])
-    ofertas = fuente.buscar("python")
+    resultado = fuente.buscar("python")
+    ofertas = resultado.ofertas
     assert [o.id_externo for o in ofertas] == [
         "data-engineer-gcp-tcit-santiago",
         "senior-software-engineer-data-acquisition-team-checkr-santiago",
@@ -185,7 +187,8 @@ def test_titulo_nulo_se_omite_sin_tumbar_la_pagina(respuesta_real: dict[str, Any
     respuesta_real["data"][0]["attributes"]["title"] = None
     respuesta_real["meta"]["total_pages"] = 1
     fuente, _ = _fuente([respuesta_real])
-    claves = [o.id_externo for o in fuente.buscar("python")]
+    resultado = fuente.buscar("python")
+    claves = [o.id_externo for o in resultado.ofertas]
     assert "data-engineer-gcp-tcit-santiago" not in claves
     assert len(claves) == 2, "las demás ofertas de la página se conservan"
 
@@ -205,3 +208,23 @@ def test_empresa_tolera_formas_raras(
     item = respuesta_real["data"][0]
     item["attributes"]["company"] = company
     assert mapear_oferta(item).empresa == esperado
+
+
+def test_completa_solo_si_llega_a_la_ultima_pagina(respuesta_real: dict[str, Any]) -> None:
+    """Regresión (Sourcery, PR #5): un corte por tope se trataba como respuesta completa."""
+    hasta_el_final = {**respuesta_real, "meta": {"page": 1, "per_page": 3, "total_pages": 2}}
+    fuente, _ = _fuente([hasta_el_final, hasta_el_final])
+    assert fuente.buscar("python").completa is True
+
+    cortada = {**respuesta_real, "meta": {"page": 1, "per_page": 3, "total_pages": 43}}
+    fuente, pedidos = _fuente([cortada] * 5, max_paginas=2)
+    resultado = fuente.buscar("python")
+    assert resultado.completa is False
+    assert len(pedidos) == 2
+
+
+def test_sin_total_pages_es_incompleta(respuesta_real: dict[str, Any]) -> None:
+    fuente, _ = _fuente([{**respuesta_real, "meta": {}}])
+    resultado = fuente.buscar("python")
+    assert resultado.completa is False
+    assert len(resultado.ofertas) == 3

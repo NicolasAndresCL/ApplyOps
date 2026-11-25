@@ -221,3 +221,22 @@ def test_error_de_dominio_sin_mapeo_no_filtra_su_mensaje(repo: RepoEnMemoria) ->
     assert respuesta.status_code == 500
     assert "secreto" not in respuesta.text
     assert respuesta.json()["error"]["mensaje"] == "Error interno; revisa los logs del servicio"
+
+
+def test_http_exception_5xx_no_filtra_detalle_y_405_conserva_allow(repo: RepoEnMemoria) -> None:
+    """Regresión (Sourcery, PR #5)."""
+    from fastapi import HTTPException
+
+    app = crear_app(contenedor_de_prueba(repo))
+
+    @app.get("/roto")
+    def roto() -> None:
+        raise HTTPException(status_code=503, detail="host interno db-1:5432 caído")
+
+    with TestClient(app) as c:
+        respuesta = c.get("/roto")
+        metodo = c.delete("/ofertas")
+    assert respuesta.status_code == 503
+    assert "db-1" not in respuesta.text
+    assert respuesta.json()["error"]["codigo"] == "error_interno"
+    assert "GET" in metodo.headers["allow"]

@@ -18,14 +18,27 @@ from applyops.domain.oferta import Oferta
 from applyops.domain.scoring import OfertaPuntuada
 
 
+@dataclass(frozen=True, slots=True)
+class ResultadoBusqueda:
+    """Lo que devolvió una consulta y si es TODO lo que la fuente tiene para ella.
+
+    `completa=False` cuando la fuente cortó por el tope de páginas, omitió alguna
+    oferta mal formada o la paginación no se pudo leer. Con un resultado incompleto,
+    que una oferta falte no prueba que se cerró: no se vence nada.
+    """
+
+    ofertas: list[Oferta]
+    completa: bool = True
+
+
 class FuenteOfertas(Protocol):
     """Una fuente de ofertas con API o feed público (ver ADR 0001)."""
 
     @property
     def nombre(self) -> str: ...
 
-    def buscar(self, consulta: str) -> list[Oferta]:
-        """Ofertas que calzan con la consulta.
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
+        """Ofertas que calzan con la consulta, declarando si el resultado está completo.
 
         Lanza `FuenteNoDisponibleError` si la fuente no responde bien tras los
         reintentos; nunca devuelve una lista vacía para disimular un fallo.

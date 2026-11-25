@@ -11,8 +11,7 @@ import pytest
 
 from applyops.application.recolectar import RecolectarOfertas
 from applyops.domain.errores import FuenteNoDisponibleError, RecoleccionEnCursoError
-from applyops.domain.oferta import Oferta
-from applyops.domain.puertos import FuenteOfertas
+from applyops.domain.puertos import FuenteOfertas, ResultadoBusqueda
 from applyops.domain.scoring import OfertaPuntuada, puntuar
 from tests.fakes import AHORA, FuenteCaida, FuenteFalsa, RepoEnMemoria, un_perfil, una_oferta
 
@@ -68,10 +67,10 @@ def test_no_permite_dos_recolecciones_a_la_vez() -> None:
     class FuenteLenta:
         nombre = "lenta"
 
-        def buscar(self, consulta: str) -> list[Oferta]:
+        def buscar(self, consulta: str) -> ResultadoBusqueda:
             dentro.set()
             soltar.wait(timeout=5)
-            return []
+            return ResultadoBusqueda([])
 
     caso = _caso([FuenteLenta()], RepoEnMemoria())
     hilo = threading.Thread(target=caso.ejecutar)
@@ -92,10 +91,10 @@ class FuenteIntermitente:
 
     nombre = "intermitente"
 
-    def buscar(self, consulta: str) -> list[Oferta]:
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
         if consulta == "backend":
             raise FuenteNoDisponibleError(self.nombre, "timeout tras 3 intentos")
-        return [una_oferta(fuente=self.nombre)]
+        return ResultadoBusqueda([una_oferta(fuente=self.nombre)])
 
 
 def test_consulta_caida_no_descarta_lo_que_trajeron_las_demas() -> None:
@@ -140,3 +139,17 @@ def test_las_manuales_no_vencen() -> None:
     repo.guardar([OfertaPuntuada(manual, puntuar(manual, un_perfil()), AHORA)])
     _caso([FuenteFalsa("falsa", {"python": []})], repo).ejecutar()
     assert repo.filas["manual:abc"].vencida_en is None
+
+
+def test_resultado_incompleto_no_vence_ofertas_vivas() -> None:
+    """Regresión (Sourcery, PR #5): con corte por tope de páginas se vencían ofertas abiertas."""
+    repo = RepoEnMemoria()
+    ofertas = {"python": [una_oferta(id_externo="1"), una_oferta(id_externo="2")]}
+    fuente = FuenteFalsa("falsa", ofertas)
+    caso = _caso([fuente], repo)
+    caso.ejecutar()
+
+    ofertas["python"] = [una_oferta(id_externo="1")]  # la 2 quedó más allá del tope
+    fuente.completa = False
+    assert caso.ejecutar().resultados[0].vencidas == 0
+    assert repo.filas["falsa:2"].vencida_en is None

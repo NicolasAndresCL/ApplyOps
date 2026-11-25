@@ -5,9 +5,12 @@ Degradación elegante: si una consulta de una fuente falla
 ofertas que trajeron las demás consultas de esa fuente y el ciclo sigue con las
 otras fuentes. Cualquier otro error es un bug y sube.
 
-Vencimiento: solo cuando una fuente respondió COMPLETA (todas sus consultas sin
-error), sus ofertas guardadas que ya no vinieron se marcan vencidas. Con una
-respuesta parcial, que una oferta falte no prueba que se cerró.
+Vencimiento: solo cuando una fuente respondió COMPLETA —todas sus consultas sin
+error y cada una declarando `completa` (sin corte por tope de páginas ni ofertas
+omitidas)— sus ofertas guardadas que ya no vinieron se marcan vencidas. Con un
+resultado parcial, que una oferta falte no prueba que se cerró. Si se quita una
+consulta del perfil, vencen las ofertas que solo ella traía: ya no son parte de
+la búsqueda.
 
 Un candado impide dos recolecciones simultáneas (el scheduler y un
 `POST /recolecciones` manual), que duplicarían las llamadas a las fuentes sin
@@ -98,7 +101,7 @@ class RecolectarOfertas:
         return resumen
 
     def _recolectar_fuente(self, fuente: FuenteOfertas) -> ResultadoFuente:
-        ofertas, errores = self._buscar_todas(fuente)
+        ofertas, errores, completa = self._buscar_todas(fuente)
         error = "; ".join(errores) if errores else None
         if errores:
             logger.warning(
@@ -109,26 +112,34 @@ class RecolectarOfertas:
         puntuadas = [OfertaPuntuada(o, puntuar(o, self._perfil), ahora) for o in ofertas]
         nuevas = self._repo.guardar(puntuadas)
         vencidas = 0
-        if not errores:
+        if not errores and completa:
             vencidas = self._repo.marcar_vencidas(fuente.nombre, [o.clave for o in ofertas], ahora)
+        elif not errores:
+            logger.info(
+                "Resultado incompleto (tope de páginas u ofertas omitidas): no se vence nada",
+                extra={"fuente": fuente.nombre},
+            )
         return ResultadoFuente(
             fuente.nombre, encontradas=len(ofertas), nuevas=nuevas, error=error, vencidas=vencidas
         )
 
-    def _buscar_todas(self, fuente: FuenteOfertas) -> tuple[list[Oferta], list[str]]:
-        """Ofertas de todas las consultas (deduplicadas) y los motivos de las que fallaron.
+    def _buscar_todas(self, fuente: FuenteOfertas) -> tuple[list[Oferta], list[str], bool]:
+        """Ofertas de todas las consultas (deduplicadas), motivos de las que fallaron y
+        si todas las que respondieron lo hicieron completas.
 
         Varias consultas devuelven la misma oferta («python» y «backend»): se
         deduplica por clave. Una consulta caída no descarta lo que trajeron las demás.
         """
         por_clave: dict[str, Oferta] = {}
         errores: list[str] = []
+        completa = True
         for consulta in self._perfil.consultas:
             try:
                 resultado = fuente.buscar(consulta)
             except FuenteNoDisponibleError as error:
                 errores.append(f"«{consulta}»: {error.motivo}")
                 continue
-            for oferta in resultado:
+            completa = completa and resultado.completa
+            for oferta in resultado.ofertas:
                 por_clave.setdefault(oferta.clave, oferta)
-        return list(por_clave.values()), errores
+        return list(por_clave.values()), errores, completa

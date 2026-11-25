@@ -56,8 +56,18 @@ async def _error_dominio(_: Request, error: Exception) -> JSONResponse:
 async def _error_http(_: Request, error: Exception) -> JSONResponse:
     """404 de ruta, 405 de método y demás HTTPException con el contrato común."""
     estado = error.status_code if isinstance(error, StarletteHTTPException) else 500
+    if estado >= 500:
+        # Un 5xx por HTTPException también puede traer detalle interno: genérico.
+        logger.error("HTTPException de servidor", exc_info=error)
+        return _respuesta("error_interno", MENSAJE_INTERNO, estado)
     detalle = error.detail if isinstance(error, StarletteHTTPException) else None
-    return _respuesta(CODIGOS_HTTP.get(estado, f"http_{estado}"), str(detalle or "Error"), estado)
+    respuesta = _respuesta(
+        CODIGOS_HTTP.get(estado, f"http_{estado}"), str(detalle or "Error"), estado
+    )
+    cabeceras = getattr(error, "headers", None)  # el 405 trae «Allow»
+    if cabeceras:
+        respuesta.headers.update(cabeceras)
+    return respuesta
 
 
 async def _entrada_invalida(_: Request, error: Exception) -> JSONResponse:

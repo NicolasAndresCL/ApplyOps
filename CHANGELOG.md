@@ -13,7 +13,9 @@ Correcciones de la revisión automática (Sourcery) del PR #3.
 ### Corregido
 - **Las ofertas cerradas ya no quedan en la bandeja**: tras una recolección completa de una fuente, sus
   ofertas que ya no vienen se marcan vencidas (`vencida_en`, migración `0002`) y dejan de listarse; si
-  reaparecen, vuelven. Las cargadas a mano no vencen. `GET /ofertas?incluir_vencidas=true` las muestra y
+  reaparecen, vuelven. Solo se vence si la respuesta está completa: sin consultas caídas, sin corte
+  por el tope de páginas y sin ofertas omitidas (cada fuente lo declara en `ResultadoBusqueda`). Las
+  cargadas a mano no vencen. `GET /ofertas?incluir_vencidas=true` las muestra y
   el detalle en la UI avisa que la oferta probablemente se cerró.
 - **Una consulta que falla ya no descarta las demás de la misma fuente**: se guarda lo que respondió y la
   fuente se informa como degradada (en ese caso no se vence nada, porque la lista está incompleta).
@@ -23,7 +25,8 @@ Correcciones de la revisión automática (Sourcery) del PR #3.
 - **Reintentos**: se reintenta cualquier 5xx (antes solo 500/502/503/504) y se respeta `Retry-After` en
   429/503, con tope de 60 s.
 - **Errores**: un error de dominio sin código HTTP ya no devuelve su mensaje interno en el 500; los 404 y
-  405 de rutas usan el contrato `{"error": …}` (`ruta_no_encontrada`, `metodo_no_permitido`).
+  405 de rutas usan el contrato `{"error": …}` (`ruta_no_encontrada`, `metodo_no_permitido`, con su
+  cabecera `Allow`), y un 5xx lanzado como `HTTPException` tampoco expone su detalle.
 - **Docker Compose** pasa a la API `HTTP_TIMEOUT_SEGUNDOS`, `HTTP_REINTENTOS`, `GETONBOARD_URL_BASE` y
   `GETONBOARD_MAX_PAGINAS`: configurarlas en `.env` antes no tenía efecto.
 - **Perfil**: se rechazan pesos negativos aunque sumen 100.

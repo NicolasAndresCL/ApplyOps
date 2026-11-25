@@ -31,6 +31,7 @@ from typing import Any
 from applyops.adapters.outbound.http_resiliente import ClienteHttpResiliente
 from applyops.domain.errores import FuenteNoDisponibleError, OfertaInvalidaError
 from applyops.domain.oferta import Modalidad, Oferta, Seniority
+from applyops.domain.puertos import ResultadoBusqueda
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +76,13 @@ class FuenteGetOnBoard:
         self._url = f"{url_base.rstrip('/')}/search/jobs"
         self._max_paginas = max_paginas
 
-    def buscar(self, consulta: str) -> list[Oferta]:
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
+        """Pagina hasta `total_pages` o el tope. El resultado es completo solo si llegó
+        a la última página, no omitió ofertas y la paginación era legible."""
         ofertas: list[Oferta] = []
+        completa = True
         pagina = 1
-        while pagina <= self._max_paginas:
+        while True:
             cuerpo = self._http.get_json(
                 self._url,
                 params={
@@ -89,14 +93,21 @@ class FuenteGetOnBoard:
                 },
             )
             datos, total_paginas = _validar_pagina(cuerpo)
-            ofertas.extend(o for o in map(_mapear_seguro, datos) if o is not None)
-            if pagina >= total_paginas:
+            mapeadas = [o for o in map(_mapear_seguro, datos) if o is not None]
+            ofertas.extend(mapeadas)
+            if total_paginas is None or len(mapeadas) < len(datos):
+                completa = False  # paginación ilegible u ofertas omitidas
+            if pagina >= (total_paginas or 1):
+                break
+            if pagina >= self._max_paginas:
+                completa = False  # quedan páginas sin leer: corte por el tope
                 break
             pagina += 1
-        return ofertas
+        return ResultadoBusqueda(ofertas, completa)
 
 
-def _validar_pagina(cuerpo: Any) -> tuple[list[Any], int]:
+def _validar_pagina(cuerpo: Any) -> tuple[list[Any], int | None]:
+    """`data` y `total_pages`; este último es None si falta o no es entero."""
     if not isinstance(cuerpo, dict) or not isinstance(cuerpo.get("data"), list):
         raise FuenteNoDisponibleError(NOMBRE, "respuesta sin la lista 'data': ¿cambió el contrato?")
     meta = cuerpo.get("meta") or {}
@@ -104,8 +115,8 @@ def _validar_pagina(cuerpo: Any) -> tuple[list[Any], int]:
         # Sin `meta` legible no se sabe cuántas páginas hay: mejor degradar la consulta
         # que paginar a ciegas o reventar con AttributeError (revisión Sourcery, 2026-11-25).
         raise FuenteNoDisponibleError(NOMBRE, "'meta' no es un objeto: ¿cambió el contrato?")
-    total = meta.get("total_pages", 1)
-    return cuerpo["data"], total if isinstance(total, int) else 1
+    total = meta.get("total_pages")
+    return cuerpo["data"], total if isinstance(total, int) else None
 
 
 def _mapear_seguro(item: Any) -> Oferta | None:

@@ -175,7 +175,8 @@ una palabra excluida en el título, o híbrida/presencial/remota-local fuera de 
 
 **Vencimiento:** cuando una fuente responde completa, sus ofertas guardadas que ya no aparecen se marcan
 vencidas y salen de la bandeja (probablemente se cerraron); si reaparecen, vuelven. Con una respuesta
-parcial no se vence nada, y las ofertas cargadas a mano nunca vencen.
+parcial —una consulta caída, corte por el tope de páginas u ofertas omitidas— no se vence nada, y las
+ofertas cargadas a mano nunca vencen.
 
 ## Variables de entorno
 
@@ -203,7 +204,7 @@ nuevo con Python 3.14 (el runner solo ve lo versionado):
 
 1. `ruff check` y `ruff format --check`.
 2. `mypy` estricto (con el plugin de Pydantic).
-3. `pytest` con cobertura mínima del **80 %**: hoy **200 tests, 98,3 %**, en ~14 s. En CI los de
+3. `pytest` con cobertura mínima del **80 %**: hoy **204 tests, 98,4 %**, en ~14 s. En CI los de
    integración corren contra **PostgreSQL 16** (`DATABASE_URL_TEST`); en local, contra SQLite si no está
    definida. El esquema de prueba se crea **con las migraciones**, y un test compara modelos y
    migraciones. Los de la UI usan el `User` simulado de NiceGUI hablando por `httpx.ASGITransport` con la

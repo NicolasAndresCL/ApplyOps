@@ -21,7 +21,7 @@ from applyops.application.registrar_manual import RegistrarOfertaManual
 from applyops.domain.errores import FuenteNoDisponibleError, OfertaNoEncontradaError
 from applyops.domain.oferta import Modalidad, Oferta, Seniority
 from applyops.domain.perfil import PerfilBusqueda, Skill
-from applyops.domain.puertos import FiltroOfertas, FuenteOfertas
+from applyops.domain.puertos import FiltroOfertas, FuenteOfertas, ResultadoBusqueda
 from applyops.domain.scoring import OfertaPuntuada
 
 AHORA = datetime(2026, 11, 25, 12, 0, tzinfo=UTC)
@@ -100,10 +100,11 @@ class FuenteFalsa:
         self.nombre = nombre
         self._por_consulta = por_consulta
         self.consultas: list[str] = []
+        self.completa = True  # los tests lo bajan para simular un corte por tope
 
-    def buscar(self, consulta: str) -> list[Oferta]:
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
         self.consultas.append(consulta)
-        return list(self._por_consulta.get(consulta, []))
+        return ResultadoBusqueda(list(self._por_consulta.get(consulta, [])), self.completa)
 
 
 class FuenteCaida:
@@ -112,7 +113,7 @@ class FuenteCaida:
     def __init__(self, nombre: str = "caida") -> None:
         self.nombre = nombre
 
-    def buscar(self, consulta: str) -> list[Oferta]:
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
         raise FuenteNoDisponibleError(self.nombre, "HTTP 503 tras 3 intentos")
 
 
