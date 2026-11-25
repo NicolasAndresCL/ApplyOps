@@ -70,7 +70,7 @@ def test_recolectar_y_listar_priorizado(cliente: TestClient) -> None:
     resumen = cliente.post("/recolecciones").json()
     assert resumen["total_nuevas"] == 3
     assert resumen["resultados"] == [
-        {"fuente": "falsa", "encontradas": 3, "nuevas": 3, "error": None}
+        {"fuente": "falsa", "encontradas": 3, "nuevas": 3, "error": None, "vencidas": 0}
     ]
 
     bandeja = cliente.get("/ofertas").json()
@@ -196,3 +196,28 @@ def test_registrar_oferta_manual_valida_con_el_contrato_de_error(cliente: TestCl
     )
     assert invertido.status_code == 422
     assert invertido.json()["error"]["codigo"] == "oferta_invalida"
+
+
+def test_ruta_y_metodo_inexistentes_usan_el_contrato(cliente: TestClient) -> None:
+    """Regresión (Sourcery, 2026-11-25): salían con `{"detail": ...}` de FastAPI."""
+    ruta = cliente.get("/no-existe")
+    assert ruta.status_code == 404
+    assert ruta.json()["error"]["codigo"] == "ruta_no_encontrada"
+    metodo = cliente.delete("/ofertas")
+    assert metodo.status_code == 405
+    assert metodo.json()["error"]["codigo"] == "metodo_no_permitido"
+
+
+def test_error_de_dominio_sin_mapeo_no_filtra_su_mensaje(repo: RepoEnMemoria) -> None:
+    """Regresión (Sourcery, 2026-11-25): el 500 devolvía str(error) al cliente."""
+
+    class RepoQueFalla(RepoEnMemoria):
+        def listar(self, filtro: object) -> list[object]:  # type: ignore[override]
+            raise ApplyOpsError("ruta interna /srv/secreto y motivo crudo")
+
+    roto = RepoQueFalla()
+    with TestClient(crear_app(contenedor_de_prueba(roto)), raise_server_exceptions=False) as c:
+        respuesta = c.get("/ofertas")
+    assert respuesta.status_code == 500
+    assert "secreto" not in respuesta.text
+    assert respuesta.json()["error"]["mensaje"] == "Error interno; revisa los logs del servicio"

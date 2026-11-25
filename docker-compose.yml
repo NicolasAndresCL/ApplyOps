@@ -28,6 +28,11 @@ services:
       DATABASE_URL: postgresql+psycopg://applyops:${POSTGRES_PASSWORD}@db:5432/applyops
       PERFIL_BUSQUEDA_PATH: ${PERFIL_BUSQUEDA_PATH:-perfil/busqueda.yaml}
       RECOLECCION_INTERVALO_HORAS: ${RECOLECCION_INTERVALO_HORAS:-0}
+      # Los defaults repiten los de Settings: sin pasarlas, el .env documentado no tenía efecto.
+      HTTP_TIMEOUT_SEGUNDOS: ${HTTP_TIMEOUT_SEGUNDOS:-15}
+      HTTP_REINTENTOS: ${HTTP_REINTENTOS:-3}
+      GETONBOARD_URL_BASE: ${GETONBOARD_URL_BASE:-https://www.getonbrd.com/api/v0}
+      GETONBOARD_MAX_PAGINAS: ${GETONBOARD_MAX_PAGINAS:-4}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       # El perfil real no entra en la imagen: se monta de solo lectura.

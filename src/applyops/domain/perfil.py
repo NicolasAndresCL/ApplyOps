@@ -47,7 +47,15 @@ class PesosScoring:
     idioma: int = 5
 
     def __post_init__(self) -> None:
-        suma = self.stack + self.modalidad + self.sueldo + self.seniority + self.idioma
+        pesos = {
+            "stack": self.stack, "modalidad": self.modalidad, "sueldo": self.sueldo,
+            "seniority": self.seniority, "idioma": self.idioma,
+        }  # fmt: skip
+        negativos = [nombre for nombre, valor in pesos.items() if valor < 0]
+        if negativos:
+            # Un peso negativo con suma 100 deja otro componente sobre su máximo: ranking roto.
+            raise PerfilInvalidoError(f"Pesos negativos: {', '.join(negativos)}")
+        suma = sum(pesos.values())
         if suma != PUNTAJE_MAXIMO:
             raise PerfilInvalidoError(f"Los pesos deben sumar {PUNTAJE_MAXIMO}, suman {suma}")
 
