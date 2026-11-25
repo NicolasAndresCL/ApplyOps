@@ -25,6 +25,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN groupadd --system app && useradd --system --gid app --home-dir /app app
 WORKDIR /app
+# La UI (NiceGUI) guarda sesiones en /app/.nicegui: el usuario no-root necesita escribir ahí.
+RUN mkdir -p /app/.nicegui && chown app:app /app/.nicegui
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --chown=app:app alembic.ini ./

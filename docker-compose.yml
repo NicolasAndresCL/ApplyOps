@@ -1,4 +1,4 @@
-# Entorno local: API + PostgreSQL 16.
+# Entorno local: UI (NiceGUI) + API + PostgreSQL 16.
 #   docker compose up -d --build --wait   # levanta y espera los healthchecks
 #   docker compose down                   # baja; conserva los datos
 #   docker compose down -v                # baja y BORRA la base de datos
@@ -36,6 +36,33 @@ services:
       - "127.0.0.1:${API_PUERTO_HOST:-8000}:8000"
     depends_on:
       db:
+        condition: service_healthy
+
+  ui:
+    # Misma imagen que la API; otro proceso. Habla con la API por HTTP en la red interna.
+    build: .
+    entrypoint: ["python", "-m", "applyops.adapters.inbound.ui.main"]
+    environment:
+      API_URL: http://api:8000
+      UI_HOST: 0.0.0.0
+      UI_PUERTO: 8080
+      # Fijo en .env para que el tema elegido sobreviva a un reinicio; si falta, se genera uno.
+      UI_STORAGE_SECRET: ${UI_STORAGE_SECRET:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      # Imágenes de los temas (con derechos de autor, no van en la imagen ni en git).
+      # Sin la carpeta, los temas se ven con sus colores.
+      - ./assets/temas:/app/assets/temas:ro
+    ports:
+      - "127.0.0.1:${UI_PUERTO_HOST:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    depends_on:
+      api:
         condition: service_healthy
 
 volumes:

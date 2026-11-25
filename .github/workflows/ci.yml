@@ -71,6 +71,10 @@ jobs:
         run: docker compose up -d --build --wait --wait-timeout 120
       - name: /health responde
         run: curl --fail --silent --show-error http://127.0.0.1:8000/health
+      - name: La UI responde y habla con la API
+        run: |
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/ajustes
       - name: Logs si algo falló
         if: failure()
         run: docker compose logs
