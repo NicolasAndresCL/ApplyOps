@@ -12,17 +12,22 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from applyops import __version__
-from applyops.adapters.inbound.api.contenedor import Contenedor
-from applyops.application.consultar import ConsultarOfertas
 from applyops.application.recolectar import RecolectarOfertas
 from applyops.domain.errores import ApplyOpsError, RecoleccionEnCursoError
 from applyops.main import crear_app
-from tests.fakes import AHORA, FuenteFalsa, RepoEnMemoria, un_perfil, una_oferta
+from tests.fakes import (
+    AHORA,
+    FuenteFalsa,
+    RepoEnMemoria,
+    contenedor_de_prueba,
+    un_perfil,
+    una_oferta,
+)
 
 
 def _app(repo: RepoEnMemoria, fuentes: list[FuenteFalsa] | None = None) -> FastAPI:
     recolectar = RecolectarOfertas(fuentes or [], repo, un_perfil(), reloj=lambda: AHORA)
-    return crear_app(Contenedor(recolectar, ConsultarOfertas(repo), repo))
+    return crear_app(contenedor_de_prueba(repo, recolectar=recolectar))
 
 
 @pytest.fixture
@@ -111,7 +116,7 @@ def test_recoleccion_en_curso_responde_409(repo: RepoEnMemoria) -> None:
             raise RecoleccionEnCursoError
 
     ocupado = RecolectarOcupado([], repo, un_perfil(), reloj=lambda: AHORA)
-    app = crear_app(Contenedor(ocupado, ConsultarOfertas(repo), repo))
+    app = crear_app(contenedor_de_prueba(repo, recolectar=ocupado))
     with TestClient(app) as c:
         respuesta = c.post("/recolecciones")
     assert respuesta.status_code == 409
@@ -129,13 +134,7 @@ def test_error_de_dominio_sin_mapeo_y_error_inesperado_son_500(repo: RepoEnMemor
 
     for error in (ApplyOpsError("x"), RuntimeError("detalle interno")):
         roto = RepoRoto(error)
-        app = crear_app(
-            Contenedor(
-                RecolectarOfertas([], roto, un_perfil(), reloj=lambda: AHORA),
-                ConsultarOfertas(roto),
-                roto,
-            )
-        )
+        app = crear_app(contenedor_de_prueba(roto))
         with TestClient(app, raise_server_exceptions=False) as c:
             respuesta = c.get("/ofertas")
         assert respuesta.status_code == 500
@@ -150,3 +149,50 @@ def test_correlation_id_se_respeta_o_se_genera(cliente: TestClient) -> None:
     invalido = cliente.get("/health", headers={"X-Correlation-ID": "id con espacios"})
     assert invalido.headers["X-Correlation-ID"] != "id con espacios"
     assert len(cliente.get("/health").headers["X-Correlation-ID"]) == 12
+
+
+OFERTA_LINKEDIN = {
+    "url": "https://www.linkedin.com/jobs/view/123/?trk=abc",
+    "titulo": "Backend Engineer Python",
+    "empresa": "Acme Remote",
+    "descripcion": "Buscamos Python, FastAPI y PostgreSQL para equipo remoto en LATAM.",
+    "modalidad": "remoto",
+    "sueldo_min_usd": 2500,
+    "sueldo_max_usd": 3500,
+    "seniority": "semi_senior",
+    "idioma": "en",
+}
+
+
+def test_registrar_oferta_manual_la_puntua_y_es_idempotente(cliente: TestClient) -> None:
+    creada = cliente.post("/ofertas", json=OFERTA_LINKEDIN)
+    assert creada.status_code == 201
+    detalle = creada.json()
+    assert detalle["fuente"] == "manual"
+    assert detalle["clave"].startswith("manual:")
+    assert detalle["puntaje"] > 80
+    assert detalle["componentes"][0]["nombre"] == "stack"
+
+    # Misma oferta con otro parámetro de rastreo: actualiza, no duplica.
+    otra_copia = {
+        **OFERTA_LINKEDIN,
+        "url": "https://www.linkedin.com/jobs/view/123?refId=xyz",
+        "titulo": "Backend Engineer Python (Sr)",
+    }
+    repetida = cliente.post("/ofertas", json=otra_copia).json()
+    assert repetida["clave"] == detalle["clave"]
+    assert repetida["titulo"] == "Backend Engineer Python (Sr)"
+    assert len(cliente.get("/ofertas").json()) == 1
+
+
+def test_registrar_oferta_manual_valida_con_el_contrato_de_error(cliente: TestClient) -> None:
+    sin_url = cliente.post("/ofertas", json={**OFERTA_LINKEDIN, "url": "no-es-url"})
+    assert sin_url.status_code == 422
+    assert sin_url.json()["error"]["codigo"] == "entrada_invalida"
+    assert "url" in sin_url.json()["error"]["mensaje"]
+
+    invertido = cliente.post(
+        "/ofertas", json={**OFERTA_LINKEDIN, "sueldo_min_usd": 5000, "sueldo_max_usd": 1000}
+    )
+    assert invertido.status_code == 422
+    assert invertido.json()["error"]["codigo"] == "oferta_invalida"

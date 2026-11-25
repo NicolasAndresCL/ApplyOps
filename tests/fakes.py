@@ -14,10 +14,14 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any
 
+from applyops.adapters.inbound.api.contenedor import Contenedor
+from applyops.application.consultar import ConsultarOfertas
+from applyops.application.recolectar import RecolectarOfertas
+from applyops.application.registrar_manual import RegistrarOfertaManual
 from applyops.domain.errores import FuenteNoDisponibleError, OfertaNoEncontradaError
 from applyops.domain.oferta import Modalidad, Oferta, Seniority
 from applyops.domain.perfil import PerfilBusqueda, Skill
-from applyops.domain.puertos import FiltroOfertas
+from applyops.domain.puertos import FiltroOfertas, FuenteOfertas
 from applyops.domain.scoring import OfertaPuntuada
 
 AHORA = datetime(2026, 11, 25, 12, 0, tzinfo=UTC)
@@ -71,6 +75,22 @@ def un_perfil(**cambios: Any) -> PerfilBusqueda:
         palabras_descarte=("ventas", "práctica"),
     )
     return replace(base, **cambios)
+
+
+def contenedor_de_prueba(
+    repo: RepoEnMemoria,
+    fuentes: Sequence[FuenteOfertas] = (),
+    recolectar: RecolectarOfertas | None = None,
+    perfil: PerfilBusqueda | None = None,
+) -> Contenedor:
+    """Contenedor completo de la API sobre fakes; el reloj queda fijo en `AHORA`."""
+    perfil = perfil or un_perfil()
+    return Contenedor(
+        recolectar=recolectar or RecolectarOfertas(fuentes, repo, perfil, reloj=lambda: AHORA),
+        consultar=ConsultarOfertas(repo),
+        registrar=RegistrarOfertaManual(repo, perfil, reloj=lambda: AHORA),
+        repo=repo,
+    )
 
 
 class FuenteFalsa:

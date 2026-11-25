@@ -14,6 +14,7 @@ from fastapi import Request
 
 from applyops.application.consultar import ConsultarOfertas
 from applyops.application.recolectar import RecolectarOfertas
+from applyops.application.registrar_manual import RegistrarOfertaManual
 from applyops.domain.puertos import RepoOfertas
 
 
@@ -21,6 +22,7 @@ from applyops.domain.puertos import RepoOfertas
 class Contenedor:
     recolectar: RecolectarOfertas
     consultar: ConsultarOfertas
+    registrar: RegistrarOfertaManual
     repo: RepoOfertas
 
 

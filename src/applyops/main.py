@@ -32,6 +32,7 @@ from applyops.adapters.outbound.perfil_yaml import cargar_perfil
 from applyops.adapters.outbound.repo_sqlalchemy import RepoOfertasSqlAlchemy
 from applyops.application.consultar import ConsultarOfertas
 from applyops.application.recolectar import RecolectarOfertas
+from applyops.application.registrar_manual import RegistrarOfertaManual
 from applyops.infra.db import crear_motor, crear_sesiones
 from applyops.infra.logs import configurar_logs
 from applyops.infra.programador import recolectar_periodicamente
@@ -62,6 +63,7 @@ def construir_contenedor(settings: Settings) -> tuple[Contenedor, Callable[[], N
     contenedor = Contenedor(
         recolectar=RecolectarOfertas(fuentes, repo, perfil, reloj=_ahora),
         consultar=ConsultarOfertas(repo),
+        registrar=RegistrarOfertaManual(repo, perfil, reloj=_ahora),
         repo=repo,
     )
 

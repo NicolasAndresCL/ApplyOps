@@ -12,10 +12,12 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from applyops.domain.errores import (
     ApplyOpsError,
+    OfertaInvalidaError,
     OfertaNoEncontradaError,
     RecoleccionEnCursoError,
 )
@@ -25,6 +27,7 @@ logger = logging.getLogger(__name__)
 ESTADOS: dict[type[ApplyOpsError], int] = {
     OfertaNoEncontradaError: 404,
     RecoleccionEnCursoError: 409,
+    OfertaInvalidaError: 422,  # p. ej. sueldo mínimo mayor que el máximo
 }
 
 
@@ -40,6 +43,16 @@ async def _error_dominio(_: Request, error: Exception) -> JSONResponse:
     return _respuesta(codigo, str(error), estado)
 
 
+async def _entrada_invalida(_: Request, error: Exception) -> JSONResponse:
+    """422 de validación con la misma forma que el resto: el cliente no parsea dos formatos."""
+    detalles = error.errors() if isinstance(error, RequestValidationError) else []
+    partes = [
+        f"{'.'.join(str(x) for x in d.get('loc', ())[1:]) or 'cuerpo'}: {d.get('msg', '')}"
+        for d in detalles
+    ]
+    return _respuesta("entrada_invalida", "; ".join(partes) or "Entrada inválida", 422)
+
+
 async def _error_inesperado(_: Request, error: Exception) -> JSONResponse:
     # Frontera declarada: el stack va al log, nunca al cliente.
     logger.error("Error no controlado", exc_info=error)
@@ -48,4 +61,5 @@ async def _error_inesperado(_: Request, error: Exception) -> JSONResponse:
 
 def registrar_manejadores(app: FastAPI) -> None:
     app.add_exception_handler(ApplyOpsError, _error_dominio)
+    app.add_exception_handler(RequestValidationError, _entrada_invalida)
     app.add_exception_handler(Exception, _error_inesperado)
