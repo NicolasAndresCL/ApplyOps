@@ -9,7 +9,7 @@ Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any
@@ -21,7 +21,7 @@ from applyops.application.registrar_manual import RegistrarOfertaManual
 from applyops.domain.errores import FuenteNoDisponibleError, OfertaNoEncontradaError
 from applyops.domain.oferta import Modalidad, Oferta, Seniority
 from applyops.domain.perfil import PerfilBusqueda, Skill
-from applyops.domain.puertos import FiltroOfertas, FuenteOfertas
+from applyops.domain.puertos import FiltroOfertas, FuenteOfertas, ResultadoBusqueda
 from applyops.domain.scoring import OfertaPuntuada
 
 AHORA = datetime(2026, 11, 25, 12, 0, tzinfo=UTC)
@@ -100,10 +100,11 @@ class FuenteFalsa:
         self.nombre = nombre
         self._por_consulta = por_consulta
         self.consultas: list[str] = []
+        self.completa = True  # los tests lo bajan para simular un corte por tope
 
-    def buscar(self, consulta: str) -> list[Oferta]:
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
         self.consultas.append(consulta)
-        return list(self._por_consulta.get(consulta, []))
+        return ResultadoBusqueda(list(self._por_consulta.get(consulta, [])), self.completa)
 
 
 class FuenteCaida:
@@ -112,7 +113,7 @@ class FuenteCaida:
     def __init__(self, nombre: str = "caida") -> None:
         self.nombre = nombre
 
-    def buscar(self, consulta: str) -> list[Oferta]:
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
         raise FuenteNoDisponibleError(self.nombre, "HTTP 503 tras 3 intentos")
 
 
@@ -129,10 +130,18 @@ class RepoEnMemoria:
             previa = self.filas.get(p.oferta.clave)
             if previa is None:
                 nuevas += 1
-                self.filas[p.oferta.clave] = p
+                self.filas[p.oferta.clave] = replace(p, vencida_en=None)
             else:
-                self.filas[p.oferta.clave] = replace(p, vista_en=previa.vista_en)
+                self.filas[p.oferta.clave] = replace(p, vista_en=previa.vista_en, vencida_en=None)
         return nuevas
+
+    def marcar_vencidas(self, fuente: str, vigentes: Collection[str], momento: datetime) -> int:
+        vencidas = 0
+        for clave, p in self.filas.items():
+            if p.oferta.fuente == fuente and clave not in vigentes and p.vencida_en is None:
+                self.filas[clave] = replace(p, vencida_en=momento)
+                vencidas += 1
+        return vencidas
 
     def listar(self, filtro: FiltroOfertas) -> list[OfertaPuntuada]:
         filas = [
@@ -140,6 +149,7 @@ class RepoEnMemoria:
             for p in self.filas.values()
             if p.puntaje.total >= filtro.min_puntaje
             and (filtro.incluir_descartadas or not p.puntaje.descartada)
+            and (filtro.incluir_vencidas or p.vencida_en is None)
         ]
         filas.sort(key=lambda p: (-p.puntaje.total, p.oferta.clave))
         return filas[: filtro.limite]

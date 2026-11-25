@@ -9,12 +9,26 @@ Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Protocol
 
 from applyops.domain.oferta import Oferta
 from applyops.domain.scoring import OfertaPuntuada
+
+
+@dataclass(frozen=True, slots=True)
+class ResultadoBusqueda:
+    """Lo que devolvió una consulta y si es TODO lo que la fuente tiene para ella.
+
+    `completa=False` cuando la fuente cortó por el tope de páginas, omitió alguna
+    oferta mal formada o la paginación no se pudo leer. Con un resultado incompleto,
+    que una oferta falte no prueba que se cerró: no se vence nada.
+    """
+
+    ofertas: list[Oferta]
+    completa: bool = True
 
 
 class FuenteOfertas(Protocol):
@@ -23,8 +37,8 @@ class FuenteOfertas(Protocol):
     @property
     def nombre(self) -> str: ...
 
-    def buscar(self, consulta: str) -> list[Oferta]:
-        """Ofertas que calzan con la consulta.
+    def buscar(self, consulta: str) -> ResultadoBusqueda:
+        """Ofertas que calzan con la consulta, declarando si el resultado está completo.
 
         Lanza `FuenteNoDisponibleError` si la fuente no responde bien tras los
         reintentos; nunca devuelve una lista vacía para disimular un fallo.
@@ -38,6 +52,7 @@ class FiltroOfertas:
 
     min_puntaje: int = 0
     incluir_descartadas: bool = False
+    incluir_vencidas: bool = False
     limite: int = 50
 
 
@@ -47,8 +62,18 @@ class RepoOfertas(Protocol):
     def guardar(self, puntuadas: Sequence[OfertaPuntuada]) -> int:
         """Inserta las nuevas y actualiza las existentes (por `clave`).
 
+        Lo guardado deja de estar vencido (reapareció en su fuente).
+
         Devuelve cuántas eran nuevas. Idempotente: guardar dos veces lo mismo
         no duplica ni cambia `vista_en`.
+        """
+        ...
+
+    def marcar_vencidas(self, fuente: str, vigentes: Collection[str], momento: datetime) -> int:
+        """Marca vencidas las ofertas de `fuente` cuya clave no está en `vigentes`.
+
+        Solo se llama tras una recolección COMPLETA de esa fuente (si una consulta
+        falló, faltar no prueba que la oferta se cerró). Devuelve cuántas venció.
         """
         ...
 

@@ -1,8 +1,16 @@
 """Caso de uso: recolectar ofertas de todas las fuentes, puntuarlas y guardarlas.
 
-Degradación elegante: si una fuente falla (`FuenteNoDisponibleError`), se
-registra en el resumen y el ciclo sigue con las demás. Cualquier otro error
-es un bug y sube.
+Degradación elegante: si una consulta de una fuente falla
+(`FuenteNoDisponibleError`), se registra en el resumen, se guardan igual las
+ofertas que trajeron las demás consultas de esa fuente y el ciclo sigue con las
+otras fuentes. Cualquier otro error es un bug y sube.
+
+Vencimiento: solo cuando una fuente respondió COMPLETA —todas sus consultas sin
+error y cada una declarando `completa` (sin corte por tope de páginas ni ofertas
+omitidas)— sus ofertas guardadas que ya no vinieron se marcan vencidas. Con un
+resultado parcial, que una oferta falte no prueba que se cerró. Si se quita una
+consulta del perfil, vencen las ofertas que solo ella traía: ya no son parte de
+la búsqueda.
 
 Un candado impide dos recolecciones simultáneas (el scheduler y un
 `POST /recolecciones` manual), que duplicarían las llamadas a las fuentes sin
@@ -36,6 +44,7 @@ class ResultadoFuente:
     encontradas: int
     nuevas: int
     error: str | None = None
+    vencidas: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,24 +101,45 @@ class RecolectarOfertas:
         return resumen
 
     def _recolectar_fuente(self, fuente: FuenteOfertas) -> ResultadoFuente:
-        try:
-            ofertas = self._buscar_todas(fuente)
-        except FuenteNoDisponibleError as error:
+        ofertas, errores, completa = self._buscar_todas(fuente)
+        error = "; ".join(errores) if errores else None
+        if errores:
             logger.warning(
-                "Fuente degradada: se omite en este ciclo",
-                extra={"fuente": fuente.nombre, "motivo": error.motivo},
+                "Fuente degradada: se guarda lo que respondió",
+                extra={"fuente": fuente.nombre, "motivo": error, "ofertas": len(ofertas)},
             )
-            return ResultadoFuente(fuente.nombre, encontradas=0, nuevas=0, error=error.motivo)
         ahora = self._reloj()
         puntuadas = [OfertaPuntuada(o, puntuar(o, self._perfil), ahora) for o in ofertas]
         nuevas = self._repo.guardar(puntuadas)
-        return ResultadoFuente(fuente.nombre, encontradas=len(ofertas), nuevas=nuevas)
+        vencidas = 0
+        if not errores and completa:
+            vencidas = self._repo.marcar_vencidas(fuente.nombre, [o.clave for o in ofertas], ahora)
+        elif not errores:
+            logger.info(
+                "Resultado incompleto (tope de páginas u ofertas omitidas): no se vence nada",
+                extra={"fuente": fuente.nombre},
+            )
+        return ResultadoFuente(
+            fuente.nombre, encontradas=len(ofertas), nuevas=nuevas, error=error, vencidas=vencidas
+        )
 
-    def _buscar_todas(self, fuente: FuenteOfertas) -> list[Oferta]:
-        # Varias consultas devuelven la misma oferta («python» y «backend»):
-        # se deduplica por clave antes de puntuar y guardar.
+    def _buscar_todas(self, fuente: FuenteOfertas) -> tuple[list[Oferta], list[str], bool]:
+        """Ofertas de todas las consultas (deduplicadas), motivos de las que fallaron y
+        si todas las que respondieron lo hicieron completas.
+
+        Varias consultas devuelven la misma oferta («python» y «backend»): se
+        deduplica por clave. Una consulta caída no descarta lo que trajeron las demás.
+        """
         por_clave: dict[str, Oferta] = {}
+        errores: list[str] = []
+        completa = True
         for consulta in self._perfil.consultas:
-            for oferta in fuente.buscar(consulta):
+            try:
+                resultado = fuente.buscar(consulta)
+            except FuenteNoDisponibleError as error:
+                errores.append(f"«{consulta}»: {error.motivo}")
+                continue
+            completa = completa and resultado.completa
+            for oferta in resultado.ofertas:
                 por_clave.setdefault(oferta.clave, oferta)
-        return list(por_clave.values())
+        return list(por_clave.values()), errores, completa

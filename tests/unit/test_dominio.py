@@ -36,6 +36,11 @@ class TestPerfil:
         with pytest.raises(PerfilInvalidoError, match="suman 90"):
             PesosScoring(stack=40)
 
+    def test_pesos_negativos_aunque_sumen_100(self) -> None:
+        """Regresión (Sourcery, 2026-11-25): solo se validaba la suma."""
+        with pytest.raises(PerfilInvalidoError, match="negativos: idioma"):
+            PesosScoring(stack=60, idioma=-5)
+
     def test_peso_de_skill_fuera_de_rango(self) -> None:
         with pytest.raises(PerfilInvalidoError, match="1–3"):
             Skill("Python", peso=5)

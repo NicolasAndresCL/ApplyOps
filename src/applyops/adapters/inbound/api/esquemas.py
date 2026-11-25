@@ -73,6 +73,7 @@ class OfertaResumenSalida(BaseModel):
     puntaje: int
     descarte: str | None
     vista_en: datetime
+    vencida_en: datetime | None = None
 
     @classmethod
     def desde(cls, p: OfertaPuntuada) -> OfertaResumenSalida:
@@ -92,6 +93,7 @@ class OfertaResumenSalida(BaseModel):
             puntaje=p.puntaje.total,
             descarte=p.puntaje.descarte,
             vista_en=p.vista_en,
+            vencida_en=p.vencida_en,
         )
 
 
@@ -123,6 +125,7 @@ class ResultadoFuenteSalida(BaseModel):
     encontradas: int
     nuevas: int
     error: str | None
+    vencidas: int = 0
 
 
 class ResumenRecoleccionSalida(BaseModel):
@@ -139,7 +142,11 @@ class ResumenRecoleccionSalida(BaseModel):
             total_nuevas=r.total_nuevas,
             resultados=[
                 ResultadoFuenteSalida(
-                    fuente=x.fuente, encontradas=x.encontradas, nuevas=x.nuevas, error=x.error
+                    fuente=x.fuente,
+                    encontradas=x.encontradas,
+                    nuevas=x.nuevas,
+                    error=x.error,
+                    vencidas=x.vencidas,
                 )
                 for x in r.resultados
             ],

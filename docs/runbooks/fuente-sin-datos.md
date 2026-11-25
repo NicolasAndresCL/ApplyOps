@@ -5,9 +5,13 @@
 ## Qué significa
 
 Un ciclo de recolección marcó una fuente como degradada: el resumen de `POST /recolecciones` trae
-`"error"` no nulo para esa fuente, y el log tiene la línea `Fuente degradada: se omite en este ciclo`.
-Las demás fuentes siguieron funcionando: la bandeja no está vacía, pero le faltan ofertas nuevas de esa
-fuente.
+`"error"` no nulo para esa fuente (con la consulta que falló: `«backend»: timeout tras 3 intentos`), y el
+log tiene la línea `Fuente degradada: se guarda lo que respondió`. Lo que trajeron las demás consultas sí
+se guardó, y las demás fuentes siguieron funcionando: a la bandeja le faltan solo las ofertas de las
+consultas caídas.
+
+Mientras una fuente responda parcial, **no se vence ninguna de sus ofertas** (faltar no prueba que se
+cerraron). Si queda degradada varios ciclos, las ofertas cerradas de esa fuente siguen visibles.
 
 ## Cómo diagnosticar
 
@@ -20,7 +24,8 @@ fuente.
    | `motivo` | Significa |
    |---|---|
    | `timeout tras N intentos` | La fuente está lenta o caída. Suele ser transitorio. |
-   | `HTTP 5xx tras N intentos` / `HTTP 429 …` | Caída o límite de tasa de la fuente. |
+   | `HTTP 5xx tras N intentos` / `HTTP 429 …` | Caída o límite de tasa. Ya se respetó su `Retry-After` (tope 60 s). |
+   | `'meta' no es un objeto` | **Cambió el contrato** de la paginación. |
    | `HTTP 4xx (no se reintenta)` | La URL o los parámetros dejaron de ser válidos: **cambió la API**. |
    | `respuesta sin la lista 'data'` / `no es JSON válido` | **Cambió el contrato** o hay una página de mantención. |
 

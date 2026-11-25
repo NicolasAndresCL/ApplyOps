@@ -32,11 +32,18 @@ def listar_ofertas(
     contenedor: ContenedorDep,
     min_puntaje: Annotated[int, Query(ge=0, le=100)] = 0,
     incluir_descartadas: bool = False,
+    incluir_vencidas: bool = False,
     limite: Annotated[int, Query(ge=1, le=500)] = 50,
 ) -> list[OfertaResumenSalida]:
-    """Bandeja priorizada: mayor puntaje primero; a igual puntaje, la más reciente."""
+    """Bandeja priorizada: mayor puntaje primero; a igual puntaje, la más reciente.
+
+    Las vencidas (su fuente ya no las publica) no salen salvo `incluir_vencidas=true`.
+    """
     filtro = FiltroOfertas(
-        min_puntaje=min_puntaje, incluir_descartadas=incluir_descartadas, limite=limite
+        min_puntaje=min_puntaje,
+        incluir_descartadas=incluir_descartadas,
+        incluir_vencidas=incluir_vencidas,
+        limite=limite,
     )
     return [OfertaResumenSalida.desde(p) for p in contenedor.consultar.listar(filtro)]
 

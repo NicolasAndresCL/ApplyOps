@@ -38,11 +38,11 @@ class _SkillYaml(_Esquema):
 
 
 class _PesosYaml(_Esquema):
-    stack: int = 50
-    modalidad: int = 20
-    sueldo: int = 15
-    seniority: int = 10
-    idioma: int = 5
+    stack: int = Field(default=50, ge=0)
+    modalidad: int = Field(default=20, ge=0)
+    sueldo: int = Field(default=15, ge=0)
+    seniority: int = Field(default=10, ge=0)
+    idioma: int = Field(default=5, ge=0)
 
 
 class _PerfilYaml(_Esquema):

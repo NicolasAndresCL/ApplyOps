@@ -69,3 +69,13 @@ def test_pesos_que_no_suman_100(tmp_path: Path) -> None:
     )
     with pytest.raises(PerfilInvalidoError, match="sumar 100"):
         cargar_perfil(ruta)
+
+
+def test_peso_negativo_en_el_yaml(tmp_path: Path) -> None:
+    ruta = tmp_path / "busqueda.yaml"
+    ruta.write_text(
+        "consultas: [python]\nskills: [{nombre: Python}]\npesos: {stack: 60, idioma: -5}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(PerfilInvalidoError, match="idioma"):
+        cargar_perfil(ruta)
