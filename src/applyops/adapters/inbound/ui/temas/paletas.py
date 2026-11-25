@@ -1,4 +1,5 @@
-"""Paletas de los cuatro temas, copiadas de Jaime (`theme.py`, `skins_op.py`, `skins_equipo.py`).
+"""Paletas de los temas: cuatro copiadas de Jaime (`theme.py`, `skins_op.py`,
+`skins_equipo.py`) y la Cian del portafolio (`Portafolio-Frontend-React/src/themes/palettes.js`).
 
 Mismo set de 15 tokens que en Jaime, para que la piel portada funcione sin
 cambios. Las etiquetas siguen el formato único del selector de Jaime:
@@ -48,6 +49,15 @@ PALETAS: dict[str, dict[str, str]] = {
         "text_mute": "#83A395", "success": "#4FF0B0", "warning": "#F2AE33",
         "error": "#E8564A", "console_bg": "#060B08", "console_txt": "#D6EBDF",
     },
+    # Cian: el tema por defecto del portafolio (fondo azul noche, acento cian e índigo).
+    # Valores de `palettes.js`; sidebar, text_mute y consola derivados (el portafolio no los tiene).
+    "cian": {
+        "bg": "#070B14", "surface": "#0D1424", "surface2": "#121B31",
+        "sidebar": "#060912", "border": "#1F2B47", "accent": "#22D3EE",
+        "accent2": "#818CF8", "text": "#E6EDF7", "text_dim": "#8B9BB8",
+        "text_mute": "#5F6F8C", "success": "#34D399", "warning": "#FBBF24",
+        "error": "#F87171", "console_bg": "#050811", "console_txt": "#C7D2FE",
+    },
 }  # fmt: skip
 
 ETIQUETAS: dict[str, str] = {
@@ -55,6 +65,7 @@ ETIQUETAS: dict[str, str] = {
     "luffy_g5": "🌞 Gear 5 · blanco · Luffy",
     "esmeralda": "⚔️ Esmeralda · verde · Zoro",
     "eren": "⚡ Shingeki · verde titán · Eren",
+    "cian": "💠 Cian · cian e índigo · Portafolio",
 }
 
 TEMA_POR_DEFECTO = "eren"

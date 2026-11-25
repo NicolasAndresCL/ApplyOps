@@ -39,8 +39,8 @@ def sin_assets(tmp_path: Path) -> temas.AssetsTema:
     return temas.AssetsTema(tmp_path / "no-existe")
 
 
-def test_cuatro_temas_con_el_set_completo_de_tokens() -> None:
-    assert set(temas.PALETAS) == {"mugiwara", "luffy_g5", "esmeralda", "eren"}
+def test_cinco_temas_con_el_set_completo_de_tokens() -> None:
+    assert set(temas.PALETAS) == {"mugiwara", "luffy_g5", "esmeralda", "eren", "cian"}
     assert set(temas.ETIQUETAS) == set(temas.PALETAS)
     for clave, paleta in temas.PALETAS.items():
         assert set(paleta) == set(TOKENS), clave
@@ -54,13 +54,37 @@ def test_paletas_identicas_a_jaime() -> None:
     assert temas.PALETAS["eren"]["accent"] == "#4FF0B0"
 
 
+def test_cian_usa_la_paleta_del_portafolio() -> None:
+    """Valores de `palettes.js` del portafolio: acento, segundo acento y fondo."""
+    p = temas.PALETAS["cian"]
+    assert (p["accent"], p["accent2"], p["bg"]) == ("#22D3EE", "#818CF8", "#070B14")
+
+
+def test_cian_se_ve_completo_sin_assets(sin_assets: temas.AssetsTema) -> None:
+    """No depende de imágenes: aurora, degradado de marca y tinta oscura sobre el cian."""
+    css = temas.css_del_tema("cian", sin_assets)
+    assert "radial-gradient" in css
+    assert "#E879F9" in css  # magenta del degradado
+    assert "background-clip: text" in css
+    assert "#04111A" in css  # texto legible sobre el cian (el blanco no se lee)
+    assert "/temas/" not in css
+
+
+def test_piel_cian_nunca_rompe_la_ui(caplog: pytest.LogCaptureFixture) -> None:
+    from applyops.adapters.inbound.ui.temas.piel_cian import piel_cian
+
+    with caplog.at_level(logging.WARNING):
+        assert piel_cian("cian", {"accent": "no-es-hex"}, temas.AssetsTema(Path("x"))) == ""
+    assert "No se pudo construir" in caplog.text
+
+
 def test_resolver_cae_al_tema_por_defecto() -> None:
     assert temas.resolver("esmeralda") == "esmeralda"
     assert temas.resolver("tema_borrado") == temas.TEMA_POR_DEFECTO
     assert temas.resolver(None) == "eren"
 
 
-@pytest.mark.parametrize("clave", ["mugiwara", "luffy_g5", "esmeralda", "eren"])
+@pytest.mark.parametrize("clave", ["mugiwara", "luffy_g5", "esmeralda", "eren", "cian"])
 def test_sin_assets_queda_con_colores_planos(clave: str, sin_assets: temas.AssetsTema) -> None:
     css = temas.css_del_tema(clave, sin_assets)
     assert temas.PALETAS[clave]["accent"] in css

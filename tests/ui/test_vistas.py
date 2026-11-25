@@ -70,6 +70,12 @@ async def test_filtro_de_idioma(usuario: User) -> None:
     assert {f["idioma"] for f in filas} == {"Español"}
 
 
+async def test_ajustes_ofrece_el_tema_cian(usuario: User) -> None:
+    await usuario.open("/ajustes")
+    usuario.find(marker="tema-cian").click()
+    await usuario.should_see("Tema: 💠 Cian · cian e índigo · Portafolio")
+
+
 async def test_detalle_muestra_desglose_y_el_clic_es_humano(
     usuario: User, repo: RepoEnMemoria
 ) -> None:
