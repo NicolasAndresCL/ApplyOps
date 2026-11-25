@@ -1,8 +1,13 @@
 """Caso de uso: recolectar ofertas de todas las fuentes, puntuarlas y guardarlas.
 
-Degradación elegante: si una fuente falla (`FuenteNoDisponibleError`), se
-registra en el resumen y el ciclo sigue con las demás. Cualquier otro error
-es un bug y sube.
+Degradación elegante: si una consulta de una fuente falla
+(`FuenteNoDisponibleError`), se registra en el resumen, se guardan igual las
+ofertas que trajeron las demás consultas de esa fuente y el ciclo sigue con las
+otras fuentes. Cualquier otro error es un bug y sube.
+
+Vencimiento: solo cuando una fuente respondió COMPLETA (todas sus consultas sin
+error), sus ofertas guardadas que ya no vinieron se marcan vencidas. Con una
+respuesta parcial, que una oferta falte no prueba que se cerró.
 
 Un candado impide dos recolecciones simultáneas (el scheduler y un
 `POST /recolecciones` manual), que duplicarían las llamadas a las fuentes sin
@@ -36,6 +41,7 @@ class ResultadoFuente:
     encontradas: int
     nuevas: int
     error: str | None = None
+    vencidas: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,24 +98,37 @@ class RecolectarOfertas:
         return resumen
 
     def _recolectar_fuente(self, fuente: FuenteOfertas) -> ResultadoFuente:
-        try:
-            ofertas = self._buscar_todas(fuente)
-        except FuenteNoDisponibleError as error:
+        ofertas, errores = self._buscar_todas(fuente)
+        error = "; ".join(errores) if errores else None
+        if errores:
             logger.warning(
-                "Fuente degradada: se omite en este ciclo",
-                extra={"fuente": fuente.nombre, "motivo": error.motivo},
+                "Fuente degradada: se guarda lo que respondió",
+                extra={"fuente": fuente.nombre, "motivo": error, "ofertas": len(ofertas)},
             )
-            return ResultadoFuente(fuente.nombre, encontradas=0, nuevas=0, error=error.motivo)
         ahora = self._reloj()
         puntuadas = [OfertaPuntuada(o, puntuar(o, self._perfil), ahora) for o in ofertas]
         nuevas = self._repo.guardar(puntuadas)
-        return ResultadoFuente(fuente.nombre, encontradas=len(ofertas), nuevas=nuevas)
+        vencidas = 0
+        if not errores:
+            vencidas = self._repo.marcar_vencidas(fuente.nombre, [o.clave for o in ofertas], ahora)
+        return ResultadoFuente(
+            fuente.nombre, encontradas=len(ofertas), nuevas=nuevas, error=error, vencidas=vencidas
+        )
 
-    def _buscar_todas(self, fuente: FuenteOfertas) -> list[Oferta]:
-        # Varias consultas devuelven la misma oferta («python» y «backend»):
-        # se deduplica por clave antes de puntuar y guardar.
+    def _buscar_todas(self, fuente: FuenteOfertas) -> tuple[list[Oferta], list[str]]:
+        """Ofertas de todas las consultas (deduplicadas) y los motivos de las que fallaron.
+
+        Varias consultas devuelven la misma oferta («python» y «backend»): se
+        deduplica por clave. Una consulta caída no descarta lo que trajeron las demás.
+        """
         por_clave: dict[str, Oferta] = {}
+        errores: list[str] = []
         for consulta in self._perfil.consultas:
-            for oferta in fuente.buscar(consulta):
+            try:
+                resultado = fuente.buscar(consulta)
+            except FuenteNoDisponibleError as error:
+                errores.append(f"«{consulta}»: {error.motivo}")
+                continue
+            for oferta in resultado:
                 por_clave.setdefault(oferta.clave, oferta)
-        return list(por_clave.values())
+        return list(por_clave.values()), errores

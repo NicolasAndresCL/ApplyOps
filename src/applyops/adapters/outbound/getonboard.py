@@ -100,6 +100,10 @@ def _validar_pagina(cuerpo: Any) -> tuple[list[Any], int]:
     if not isinstance(cuerpo, dict) or not isinstance(cuerpo.get("data"), list):
         raise FuenteNoDisponibleError(NOMBRE, "respuesta sin la lista 'data': ¿cambió el contrato?")
     meta = cuerpo.get("meta") or {}
+    if not isinstance(meta, dict):
+        # Sin `meta` legible no se sabe cuántas páginas hay: mejor degradar la consulta
+        # que paginar a ciegas o reventar con AttributeError (revisión Sourcery, 2026-11-25).
+        raise FuenteNoDisponibleError(NOMBRE, "'meta' no es un objeto: ¿cambió el contrato?")
     total = meta.get("total_pages", 1)
     return cuerpo["data"], total if isinstance(total, int) else 1
 
@@ -107,7 +111,8 @@ def _validar_pagina(cuerpo: Any) -> tuple[list[Any], int]:
 def _mapear_seguro(item: Any) -> Oferta | None:
     try:
         return mapear_oferta(item)
-    except (KeyError, TypeError, ValueError, OfertaInvalidaError) as error:
+    # AttributeError: título nulo (`None.strip()`) o `company` que no es objeto.
+    except (AttributeError, KeyError, TypeError, ValueError, OfertaInvalidaError) as error:
         id_item = item.get("id") if isinstance(item, dict) else None
         logger.warning(
             "Oferta con forma inesperada, se omite",
@@ -144,8 +149,13 @@ def texto_plano(contenido_html: str) -> str:
 
 
 def _empresa(atributos: dict[str, Any]) -> str:
-    empresa = (atributos.get("company") or {}).get("data") or {}
-    nombre = (empresa.get("attributes") or {}).get("name")
+    """Nombre de la empresa expandida; tolera formas raras y cae al id o a «desconocida»."""
+    compania = atributos.get("company")
+    empresa = compania.get("data") if isinstance(compania, dict) else None
+    if not isinstance(empresa, dict):
+        return "desconocida"
+    detalle = empresa.get("attributes")
+    nombre = detalle.get("name") if isinstance(detalle, dict) else None
     return str(nombre) if nombre else str(empresa.get("id", "desconocida"))
 
 

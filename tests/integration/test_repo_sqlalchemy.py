@@ -116,3 +116,25 @@ def test_no_disponible_si_la_base_no_responde_y_sin_colgarse() -> None:
     assert repo.disponible() is False
     assert time.monotonic() - inicio < 15
     motor.dispose()
+
+
+def test_marcar_vencidas_y_revivir(repo: RepoOfertasSqlAlchemy) -> None:
+    repo.guardar([_puntuada(id_externo="a"), _puntuada(id_externo="b"),
+                  _puntuada(fuente="otra", id_externo="c")])  # fmt: skip
+    momento = AHORA + timedelta(days=1)
+    assert repo.marcar_vencidas("falsa", ["falsa:a"], momento) == 1
+    assert repo.marcar_vencidas("falsa", ["falsa:a"], momento) == 0, "idempotente"
+
+    assert [p.oferta.clave for p in repo.listar(FiltroOfertas())] == ["falsa:a", "otra:c"]
+    vencida = repo.obtener("falsa:b")
+    assert vencida.vencida_en == momento
+    assert len(repo.listar(FiltroOfertas(incluir_vencidas=True))) == 3
+
+    repo.guardar([_puntuada(id_externo="b")])  # reapareció en la fuente
+    assert repo.obtener("falsa:b").vencida_en is None
+
+
+def test_marcar_vencidas_sin_vigentes_vence_toda_la_fuente(repo: RepoOfertasSqlAlchemy) -> None:
+    repo.guardar([_puntuada(id_externo="a"), _puntuada(fuente="otra", id_externo="c")])
+    assert repo.marcar_vencidas("falsa", [], AHORA) == 1
+    assert repo.obtener("otra:c").vencida_en is None

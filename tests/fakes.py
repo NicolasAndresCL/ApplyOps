@@ -9,7 +9,7 @@ Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any
@@ -129,10 +129,18 @@ class RepoEnMemoria:
             previa = self.filas.get(p.oferta.clave)
             if previa is None:
                 nuevas += 1
-                self.filas[p.oferta.clave] = p
+                self.filas[p.oferta.clave] = replace(p, vencida_en=None)
             else:
-                self.filas[p.oferta.clave] = replace(p, vista_en=previa.vista_en)
+                self.filas[p.oferta.clave] = replace(p, vista_en=previa.vista_en, vencida_en=None)
         return nuevas
+
+    def marcar_vencidas(self, fuente: str, vigentes: Collection[str], momento: datetime) -> int:
+        vencidas = 0
+        for clave, p in self.filas.items():
+            if p.oferta.fuente == fuente and clave not in vigentes and p.vencida_en is None:
+                self.filas[clave] = replace(p, vencida_en=momento)
+                vencidas += 1
+        return vencidas
 
     def listar(self, filtro: FiltroOfertas) -> list[OfertaPuntuada]:
         filas = [
@@ -140,6 +148,7 @@ class RepoEnMemoria:
             for p in self.filas.values()
             if p.puntaje.total >= filtro.min_puntaje
             and (filtro.incluir_descartadas or not p.puntaje.descartada)
+            and (filtro.incluir_vencidas or p.vencida_en is None)
         ]
         filas.sort(key=lambda p: (-p.puntaje.total, p.oferta.clave))
         return filas[: filtro.limite]

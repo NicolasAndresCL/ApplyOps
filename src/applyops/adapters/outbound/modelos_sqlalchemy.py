@@ -44,5 +44,10 @@ class OfertaFila(Base):
     componentes: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
     vista_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     actualizada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # Cuándo una recolección completa de su fuente dejó de traerla (cerrada). None = vigente.
+    vencida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    __table_args__ = (Index("ix_ofertas_puntaje", "puntaje"),)
+    __table_args__ = (
+        Index("ix_ofertas_puntaje", "puntaje"),
+        Index("ix_ofertas_fuente", "fuente"),
+    )

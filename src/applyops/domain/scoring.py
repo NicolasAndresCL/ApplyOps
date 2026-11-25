@@ -58,11 +58,16 @@ class Puntaje:
 
 @dataclass(frozen=True, slots=True)
 class OfertaPuntuada:
-    """Una oferta junto a su puntaje y cuándo se vio por primera vez."""
+    """Una oferta junto a su puntaje, cuándo se vio por primera vez y si venció.
+
+    `vencida_en` se fija cuando una recolección completa de su fuente ya no la trae
+    (la oferta se cerró o se despublicó); vuelve a `None` si reaparece.
+    """
 
     oferta: Oferta
     puntaje: Puntaje
     vista_en: datetime
+    vencida_en: datetime | None = None
 
 
 def normalizar(texto: str) -> str:

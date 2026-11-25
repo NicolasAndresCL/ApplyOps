@@ -3,18 +3,21 @@
 `guardar` es idempotente: consulta en una sola query qué claves ya existen,
 inserta las nuevas y actualiza las demás (la oferta pudo cambiar en la fuente,
 o cambió el perfil y con él el puntaje), sin tocar `vista_en`, que registra
-cuándo apareció por primera vez.
+cuándo apareció por primera vez. Guardar una oferta la marca vigente otra vez.
+
+`marcar_vencidas` cierra el ciclo: tras una recolección completa de una fuente,
+lo que ya no vino se marca vencido en un solo UPDATE y deja de listarse.
 
 Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -57,10 +60,23 @@ class RepoOfertasSqlAlchemy:
                 _copiar(puntuada, fila, ahora)
         return nuevas
 
+    def marcar_vencidas(self, fuente: str, vigentes: Collection[str], momento: datetime) -> int:
+        consulta = update(OfertaFila).where(
+            OfertaFila.fuente == fuente,
+            OfertaFila.vencida_en.is_(None),
+        )
+        if vigentes:
+            consulta = consulta.where(OfertaFila.clave.not_in(list(vigentes)))
+        with self._sesiones.begin() as sesion:
+            resultado = sesion.execute(consulta.values(vencida_en=momento))
+        return int(getattr(resultado, "rowcount", 0) or 0)
+
     def listar(self, filtro: FiltroOfertas) -> list[OfertaPuntuada]:
         consulta = select(OfertaFila).where(OfertaFila.puntaje >= filtro.min_puntaje)
         if not filtro.incluir_descartadas:
             consulta = consulta.where(OfertaFila.descarte.is_(None))
+        if not filtro.incluir_vencidas:
+            consulta = consulta.where(OfertaFila.vencida_en.is_(None))
         consulta = consulta.order_by(
             OfertaFila.puntaje.desc(),
             OfertaFila.publicada_en.desc().nulls_last(),
@@ -104,6 +120,7 @@ def _copiar(puntuada: OfertaPuntuada, fila: OfertaFila, ahora: datetime) -> None
     fila.descarte = p.descarte
     fila.componentes = [_componente_a_json(c) for c in p.componentes]
     fila.actualizada_en = ahora
+    fila.vencida_en = None  # si se guarda, la fuente la trajo: está vigente
 
 
 def _componente_a_json(c: Componente) -> dict[str, Any]:
@@ -139,4 +156,6 @@ def _a_dominio(fila: OfertaFila) -> OfertaPuntuada:
         descarte=fila.descarte,
     )
     vista_en = fila.vista_en if fila.vista_en.tzinfo else fila.vista_en.replace(tzinfo=UTC)
-    return OfertaPuntuada(oferta=oferta, puntaje=puntaje, vista_en=vista_en)
+    return OfertaPuntuada(
+        oferta=oferta, puntaje=puntaje, vista_en=vista_en, vencida_en=_con_zona(fila.vencida_en)
+    )

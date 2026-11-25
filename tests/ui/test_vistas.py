@@ -6,6 +6,7 @@ Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
 
 from nicegui import ui
 from nicegui.testing import User
@@ -123,3 +124,17 @@ async def test_sin_api_ofrece_reintentar(usuario_sin_api: User) -> None:
     await usuario_sin_api.should_see("Reintentar")
     await usuario_sin_api.open("/ajustes")
     await usuario_sin_api.should_see("API: sin respuesta")
+
+
+async def test_oferta_vencida_avisa_en_el_detalle_y_sale_de_la_bandeja(
+    usuario: User, repo: RepoEnMemoria
+) -> None:
+    await usuario.open("/")
+    usuario.find(marker="recolectar").click()
+    await usuario.should_see("3 nuevas")
+    repo.marcar_vencidas("falsa", ["falsa:3"], datetime(2026, 11, 26, tzinfo=UTC))
+    await usuario.open("/oferta/falsa:1")
+    await usuario.should_see(marker="aviso-vencida")
+    await usuario.open("/")
+    filas = await _esperar_filas(usuario, 1)
+    assert filas[0]["clave"] == "falsa:3"

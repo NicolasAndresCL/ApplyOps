@@ -325,6 +325,10 @@ async def vista_detalle(cliente: ClienteApi, marcar: Marcar, clave: str) -> None
                 ui.label("de 100").classes("ao-mute text-caption")
         if o["descarte"]:
             ui.label(f"Descartada: {o['descarte']}").classes("text-warning text-weight-medium")
+        if o.get("vencida_en"):
+            ui.label(
+                "Ya no aparece en su fuente: probablemente se cerró. Verifícalo antes de postular."
+            ).classes("text-warning text-weight-medium").mark("aviso-vencida")
         with ui.row().classes("items-center gap-3"):
             ui.button(
                 "Abrir la oferta para postular", icon="open_in_new",

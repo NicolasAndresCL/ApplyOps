@@ -171,3 +171,37 @@ def test_remote_local_en_chile_no_se_descarta_con_el_perfil_de_ejemplo() -> None
     perfil = cargar_perfil(FIXTURE.parents[2] / "perfil" / "busqueda.example.yaml")
     for item in remotas["data"]:
         assert not puntuar(mapear_oferta(item), perfil).descartada
+
+
+def test_meta_que_no_es_objeto_degrada_la_consulta(respuesta_real: dict[str, Any]) -> None:
+    """Regresión (Sourcery, 2026-11-25): antes reventaba con AttributeError y abortaba todo."""
+    fuente, _ = _fuente([{**respuesta_real, "meta": ["raro"]}])
+    with pytest.raises(FuenteNoDisponibleError, match="meta"):
+        fuente.buscar("python")
+
+
+def test_titulo_nulo_se_omite_sin_tumbar_la_pagina(respuesta_real: dict[str, Any]) -> None:
+    """Regresión (Sourcery, 2026-11-25): `None.strip()` escapaba como AttributeError."""
+    respuesta_real["data"][0]["attributes"]["title"] = None
+    respuesta_real["meta"]["total_pages"] = 1
+    fuente, _ = _fuente([respuesta_real])
+    claves = [o.id_externo for o in fuente.buscar("python")]
+    assert "data-engineer-gcp-tcit-santiago" not in claves
+    assert len(claves) == 2, "las demás ofertas de la página se conservan"
+
+
+@pytest.mark.parametrize(
+    ("company", "esperado"),
+    [
+        ("texto", "desconocida"),
+        ({"data": "x"}, "desconocida"),
+        ({"data": {"id": "acme", "attributes": "x"}}, "acme"),
+        (None, "desconocida"),
+    ],
+)
+def test_empresa_tolera_formas_raras(
+    respuesta_real: dict[str, Any], company: Any, esperado: str
+) -> None:
+    item = respuesta_real["data"][0]
+    item["attributes"]["company"] = company
+    assert mapear_oferta(item).empresa == esperado
