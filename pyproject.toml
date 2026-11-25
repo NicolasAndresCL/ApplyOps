@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "applyops"
-version = "0.1.0"
+version = "0.2.0"
 description = "Búsqueda de trabajo continua y dirigida: recolecta ofertas, las puntúa contra el perfil, adapta CV y carta y lleva el seguimiento. El clic de postular es humano."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -52,6 +52,8 @@ python_version = "3.14"
 strict = true
 mypy_path = "src"
 packages = ["applyops"]
+# El plugin entiende que los campos de BaseSettings llegan por el entorno.
+plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
