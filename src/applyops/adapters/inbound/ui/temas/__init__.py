@@ -1,6 +1,7 @@
-"""Temas visuales de ApplyOps: Mugiwara, Gear 5 (Luffy), Esmeralda (Zoro) y Shingeki (Eren).
+"""Temas visuales de ApplyOps: Mugiwara, Gear 5 (Luffy), Esmeralda (Zoro), Shingeki (Eren)
+y Cian (el del portafolio).
 
-Copiados de Jaime. `css_del_tema()` concatena el CSS base de la paleta con la
+Los cuatro primeros, copiados de Jaime; Cian, del portafolio, sin imágenes. `css_del_tema()` concatena el CSS base de la paleta con la
 piel del tema (imágenes, tipografías, efectos); la piel va al final para pisar
 la base sin duplicarla. Un tema desconocido cae al de por defecto.
 
@@ -14,6 +15,7 @@ from collections.abc import Callable, Mapping
 from applyops.adapters.inbound.ui.temas.assets import AssetsTema
 from applyops.adapters.inbound.ui.temas.base import css_base
 from applyops.adapters.inbound.ui.temas.paletas import ETIQUETAS, PALETAS, TEMA_POR_DEFECTO
+from applyops.adapters.inbound.ui.temas.piel_cian import piel_cian
 from applyops.adapters.inbound.ui.temas.piel_eren import piel_eren
 from applyops.adapters.inbound.ui.temas.piel_op import piel_op
 
@@ -24,6 +26,7 @@ PIELES: dict[str, Piel] = {
     "luffy_g5": piel_op,
     "esmeralda": piel_op,
     "eren": piel_eren,
+    "cian": piel_cian,
 }
 
 __all__ = ["ETIQUETAS", "PALETAS", "TEMA_POR_DEFECTO", "AssetsTema", "css_del_tema", "resolver"]

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "applyops"
-version = "0.3.1"
+version = "0.4.0"
 description = "Búsqueda de trabajo continua y dirigida: recolecta ofertas, las puntúa contra el perfil, adapta CV y carta y lleva el seguimiento. El clic de postular es humano."
 readme = "README.md"
 requires-python = ">=3.14"

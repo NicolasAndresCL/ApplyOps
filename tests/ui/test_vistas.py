@@ -7,11 +7,19 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
+import httpx
 from nicegui import ui
 from nicegui.testing import User
+from nicegui.testing.user_simulation import user_simulation
 
-from tests.fakes import RepoEnMemoria
+from applyops.adapters.inbound.ui.cliente import ClienteApi
+from applyops.adapters.inbound.ui.temas import AssetsTema
+from applyops.adapters.inbound.ui.vistas import construir_raiz
+from applyops.main import crear_app
+from tests.fakes import FuenteFalsa, RepoEnMemoria, contenedor_de_prueba
 
 
 def _filas(user: User) -> list[dict[str, object]]:
@@ -55,6 +63,54 @@ async def test_ver_descartadas(usuario: User, repo: RepoEnMemoria) -> None:
     usuario.find(marker="ver-descartadas").click()
     filas = await _esperar_filas(usuario, 3)
     assert filas[-1]["descarte"] == "El título contiene «ventas»"
+
+
+async def test_filtro_de_idioma(usuario: User) -> None:
+    await usuario.open("/")
+    usuario.find(marker="recolectar").click()
+    await usuario.should_see("3 nuevas")
+    filtro = next(iter(usuario.find(marker="filtro-idioma").elements))
+    assert isinstance(filtro, ui.select)
+    filtro.value = "en"  # las ofertas falsas piden español
+    await usuario.should_see("Ninguna oferta calza con los filtros")
+    filtro.value = "es"
+    filas = await _esperar_filas(usuario, 2)
+    assert {f["idioma"] for f in filas} == {"Español"}
+
+
+async def test_respuesta_vieja_no_pisa_el_filtro_actual(
+    repo: RepoEnMemoria, fuente: FuenteFalsa, tmp_path: Path
+) -> None:
+    """Revisión Sourcery (PR #6): si cambias el filtro antes de que llegue la respuesta
+    anterior, la respuesta vieja (más lenta) no debe reemplazar a la actual."""
+
+    class ClienteLento(ClienteApi):
+        async def listar_ofertas(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
+            if kwargs.get("idioma") == "en":
+                await asyncio.sleep(0.3)  # el pedido viejo llega después del nuevo
+            return await super().listar_ofertas(*args, **kwargs)
+
+    api = crear_app(contenedor_de_prueba(repo, [fuente]))
+    cliente = ClienteLento("http://api", transporte=httpx.ASGITransport(app=api))
+    async with user_simulation(root=construir_raiz(cliente, AssetsTema(tmp_path))) as usuario:
+        await usuario.open("/")
+        usuario.find(marker="recolectar").click()
+        await usuario.should_see("3 nuevas")
+        filtro = next(iter(usuario.find(marker="filtro-idioma").elements))
+        assert isinstance(filtro, ui.select)
+        filtro.value = "en"  # lento: queda esperando
+        filtro.value = "es"  # rápido: es el vigente
+        await _esperar_filas(usuario, 2)
+        await asyncio.sleep(0.4)  # llega la respuesta vieja de «en»
+        assert {f["idioma"] for f in await _esperar_filas(usuario, 2)} == {"Español"}
+        await usuario.should_not_see("Ninguna oferta calza con los filtros")
+    await cliente.cerrar()
+
+
+async def test_ajustes_ofrece_el_tema_cian(usuario: User) -> None:
+    await usuario.open("/ajustes")
+    usuario.find(marker="tema-cian").click()
+    await usuario.should_see("Tema: 💠 Cian · cian e índigo · Portafolio")
 
 
 async def test_detalle_muestra_desglose_y_el_clic_es_humano(

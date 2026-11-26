@@ -88,6 +88,20 @@ def test_filtros_validados(cliente: TestClient) -> None:
     assert cliente.get("/ofertas", params={"min_puntaje": 101}).status_code == 422
 
 
+def test_filtro_por_idioma(cliente: TestClient) -> None:
+    cliente.post("/recolecciones")
+    assert len(cliente.get("/ofertas", params={"idioma": "es"}).json()) == 2
+    assert cliente.get("/ofertas", params={"idioma": "en"}).json() == []
+    assert cliente.get("/ofertas", params={"idioma": "no_indica"}).json() == []
+    sin_idioma = {k: v for k, v in OFERTA_LINKEDIN.items() if k != "idioma"}
+    clave = cliente.post("/ofertas", json=sin_idioma).json()["clave"]
+    no_indica = cliente.get("/ofertas", params={"idioma": "no_indica"}).json()
+    assert [o["clave"] for o in no_indica] == [clave]
+    rechazo = cliente.get("/ofertas", params={"idioma": "klingon"})
+    assert rechazo.status_code == 422
+    assert rechazo.json()["error"]["codigo"] == "entrada_invalida"
+
+
 def test_detalle_trae_desglose(cliente: TestClient) -> None:
     cliente.post("/recolecciones")
     detalle = cliente.get("/ofertas/falsa:1").json()

@@ -41,6 +41,14 @@ SENIORITIES = {
     "experto": "Experto",
 }
 IDIOMAS = {"": "No indica", "es": "Español", "en": "Inglés", "pt": "Portugués"}
+# Opciones del filtro de la bandeja: "" = todas; `no_indica` es el valor que entiende la API.
+FILTRO_IDIOMA = {
+    "": "Todos",
+    "es": "Español",
+    "en": "Inglés",
+    "pt": "Portugués",
+    "no_indica": "No indica",
+}
 # Tramos de color del puntaje en la bandeja.
 UMBRAL_ALTO = 75
 UMBRAL_MEDIO = 50
@@ -58,6 +66,7 @@ COLUMNAS: list[dict[str, Any]] = [
     {"name": "modalidad", "label": "Modalidad", "field": "modalidad", "align": "left"},
     {"name": "sueldo", "label": "Sueldo (USD)", "field": "sueldo", "align": "left"},
     {"name": "seniority", "label": "Seniority", "field": "seniority", "align": "left"},
+    {"name": "idioma", "label": "Idioma", "field": "idioma", "align": "left"},
     {"name": "fuente", "label": "Fuente", "field": "fuente", "align": "left"},
 ]
 
@@ -93,6 +102,7 @@ def fila_bandeja(oferta: dict[str, Any]) -> dict[str, Any]:
         "modalidad": MODALIDADES.get(oferta["modalidad"], oferta["modalidad"]),
         "sueldo": texto_sueldo(oferta["sueldo_min_usd"], oferta["sueldo_max_usd"]),
         "seniority": SENIORITIES.get(oferta["seniority"] or "", "No indica"),
+        "idioma": IDIOMAS.get(oferta.get("idioma") or "", oferta.get("idioma") or ""),
         "fuente": oferta["fuente"],
         "descarte": oferta["descarte"],
     }
@@ -199,17 +209,40 @@ def tarjeta_error(mensaje: str, reintentar: Callable[[], Awaitable[None]]) -> No
 
 async def vista_bandeja(cliente: ClienteApi, marcar: Marcar) -> None:
     marcar("/", "Bandeja")
-    filtros = {"min_puntaje": 0, "incluir_descartadas": False}
+    filtros: dict[str, Any] = {"min_puntaje": 0, "incluir_descartadas": False, "idioma": ""}
+    pedidos = 0  # cada carga toma un número; solo pinta la respuesta del último pedido
 
     async def cargar() -> None:
-        lista.clear()
+        nonlocal pedidos
+        pedidos += 1
+        mio = pedidos
         try:
-            ofertas = await cliente.listar_ofertas(**filtros)  # type: ignore[arg-type]
+            ofertas = await cliente.listar_ofertas(
+                min_puntaje=filtros["min_puntaje"],
+                incluir_descartadas=filtros["incluir_descartadas"],
+                idioma=filtros["idioma"] or None,
+            )
         except ApiNoDisponibleError as error:
-            with lista:
-                tarjeta_error(str(error), cargar)
+            if mio == pedidos:
+                lista.clear()
+                with lista:
+                    tarjeta_error(str(error), cargar)
             return
+        if mio != pedidos:
+            # Cambiaron los filtros mientras esperaba: esta respuesta ya no corresponde
+            # (revisión Sourcery, PR #6).
+            return
+        lista.clear()
         with lista:
+            if not ofertas and (filtros["idioma"] or filtros["min_puntaje"]):
+                # Con filtros puestos, «recolecta» sería un consejo equivocado; y el mensaje
+                # no culpa a un filtro en particular, porque puede ser la combinación.
+                with ui.card().classes("ao-card w-full q-pa-lg").mark("sin-coincidencias"):
+                    ui.label("Ninguna oferta calza con los filtros").classes("text-h6")
+                    ui.label(
+                        "Cambia el idioma, baja el puntaje mínimo o activa «Ver descartadas»."
+                    ).classes("ao-dim")
+                return
             if not ofertas:
                 with ui.card().classes("ao-card w-full q-pa-lg").mark("bandeja-vacia"):
                     ui.label("Aún no hay ofertas").classes("text-h6")
@@ -279,6 +312,12 @@ async def vista_bandeja(cliente: ClienteApi, marcar: Marcar) -> None:
             "Cargar oferta", icon="add_link", on_click=lambda: ui.navigate.to("/nueva")
         ).classes("ao-btn").props("outline")
         ui.space()
+        ui.select(
+            FILTRO_IDIOMA,
+            value="",
+            label="Idioma",
+            on_change=lambda e: cambiar("idioma", e.value or ""),
+        ).props("outlined dense options-dense").style("width:150px").mark("filtro-idioma")
         ui.label("Puntaje mínimo").classes("ao-dim")
         ui.slider(
             min=0, max=100, step=5, value=0,
@@ -319,6 +358,7 @@ async def vista_detalle(cliente: ClienteApi, marcar: Marcar, clave: str) -> None
                     pildora(
                         f"USD {texto_sueldo(o['sueldo_min_usd'], o['sueldo_max_usd'])}", "payments"
                     )
+                    pildora(IDIOMAS.get(o.get("idioma") or "", "Idioma no indicado"), "translate")
                     pildora(o["fuente"], "source")
             with ui.column().classes("items-center gap-0"):
                 ui.label(str(o["puntaje"])).classes(f"ao-puntaje {tramo(o['puntaje'])} text-h4")

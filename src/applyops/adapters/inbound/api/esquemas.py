@@ -69,6 +69,7 @@ class OfertaResumenSalida(BaseModel):
     sueldo_min_usd: int | None
     sueldo_max_usd: int | None
     seniority: str | None
+    idioma: str | None
     publicada_en: datetime | None
     puntaje: int
     descarte: str | None
@@ -89,6 +90,7 @@ class OfertaResumenSalida(BaseModel):
             sueldo_min_usd=o.sueldo_min_usd,
             sueldo_max_usd=o.sueldo_max_usd,
             seniority=o.seniority.value if o.seniority else None,
+            idioma=o.idioma,
             publicada_en=o.publicada_en,
             puntaje=p.puntaje.total,
             descarte=p.puntaje.descarte,
@@ -101,7 +103,6 @@ class OfertaDetalleSalida(OfertaResumenSalida):
     """Detalle: suma la descripción y el desglose del puntaje."""
 
     descripcion: str
-    idioma: str | None
     componentes: list[ComponenteSalida]
 
     @classmethod
@@ -110,7 +111,6 @@ class OfertaDetalleSalida(OfertaResumenSalida):
         return cls(
             **base,
             descripcion=p.oferta.descripcion,
-            idioma=p.oferta.idioma,
             componentes=[
                 ComponenteSalida(
                     nombre=c.nombre, puntos=round(c.puntos, 2), maximo=c.maximo, detalle=c.detalle

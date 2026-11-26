@@ -19,7 +19,7 @@ from applyops.adapters.outbound.modelos_sqlalchemy import Base
 from applyops.adapters.outbound.repo_sqlalchemy import RepoOfertasSqlAlchemy
 from applyops.domain.errores import OfertaNoEncontradaError
 from applyops.domain.oferta import Modalidad, Seniority
-from applyops.domain.puertos import FiltroOfertas
+from applyops.domain.puertos import IDIOMA_NO_INDICA, FiltroOfertas
 from applyops.domain.scoring import OfertaPuntuada, puntuar
 from applyops.infra.db import crear_motor
 from tests.fakes import AHORA, un_perfil, una_oferta
@@ -97,6 +97,24 @@ def test_listar_ordena_y_filtra(repo: RepoOfertasSqlAlchemy) -> None:
         "vieja",
     ]
     assert len(repo.listar(FiltroOfertas(limite=1))) == 1
+
+
+def test_listar_filtra_por_idioma(repo: RepoOfertasSqlAlchemy) -> None:
+    repo.guardar(
+        [
+            _puntuada(id_externo="es", idioma="es"),
+            _puntuada(id_externo="en", idioma="en"),
+            _puntuada(id_externo="sin", idioma=None),
+        ]
+    )
+
+    def ids(idioma: str | None) -> set[str]:
+        return {p.oferta.id_externo for p in repo.listar(FiltroOfertas(idioma=idioma))}
+
+    assert ids(None) == {"es", "en", "sin"}
+    assert ids("en") == {"en"}
+    assert ids(IDIOMA_NO_INDICA) == {"sin"}
+    assert ids("pt") == set()
 
 
 def test_obtener_inexistente(repo: RepoOfertasSqlAlchemy) -> None:

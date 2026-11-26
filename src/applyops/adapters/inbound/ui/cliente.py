@@ -54,13 +54,19 @@ class ClienteApi:
         await self._http.aclose()
 
     async def listar_ofertas(
-        self, min_puntaje: int = 0, incluir_descartadas: bool = False, limite: int = 500
+        self,
+        min_puntaje: int = 0,
+        incluir_descartadas: bool = False,
+        limite: int = 500,
+        idioma: str | None = None,
     ) -> list[dict[str, Any]]:
-        params = {
+        params: dict[str, Any] = {
             "min_puntaje": min_puntaje,
             "incluir_descartadas": str(incluir_descartadas).lower(),
             "limite": limite,
         }
+        if idioma:
+            params["idioma"] = idioma
         datos: list[dict[str, Any]] = await self._pedir("GET", "/ofertas", params=params)
         return datos
 

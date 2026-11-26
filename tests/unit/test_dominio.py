@@ -10,6 +10,7 @@ import pytest
 from applyops.domain.errores import OfertaInvalidaError, PerfilInvalidoError
 from applyops.domain.oferta import Modalidad
 from applyops.domain.perfil import PesosScoring, Skill
+from applyops.domain.puertos import IDIOMA_NO_INDICA, FiltroOfertas
 from tests.fakes import un_perfil, una_oferta
 
 
@@ -60,3 +61,29 @@ class TestPerfil:
     def test_perfil_invalido(self, cambios: dict[str, object], mensaje: str) -> None:
         with pytest.raises(PerfilInvalidoError, match=mensaje):
             un_perfil(**cambios)
+
+
+class TestFiltroOfertas:
+    def test_idioma_invalido_falla_al_construir(self) -> None:
+        """Revisión Sourcery (PR #6): un filtro inválido no debe parecer una lista vacía."""
+        with pytest.raises(ValueError, match="klingon"):
+            FiltroOfertas(idioma="klingon")
+
+    def test_limite_posicional_no_se_vuelve_idioma(self) -> None:
+        """Revisión Sourcery (PR #6): `idioma` va al final y no corre la posición de `limite`."""
+        filtro = FiltroOfertas(0, False, False, 10)
+        assert (filtro.limite, filtro.idioma) == (10, None)
+
+    @pytest.mark.parametrize(
+        ("filtro", "idioma", "acepta"),
+        [
+            (None, None, True),
+            (None, "en", True),
+            ("es", "es", True),
+            ("es", "en", False),
+            (IDIOMA_NO_INDICA, None, True),
+            (IDIOMA_NO_INDICA, "es", False),
+        ],
+    )
+    def test_acepta_idioma(self, filtro: str | None, idioma: str | None, acepta: bool) -> None:
+        assert FiltroOfertas(idioma=filtro).acepta_idioma(idioma) is acepta

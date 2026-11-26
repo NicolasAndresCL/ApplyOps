@@ -1,12 +1,12 @@
 # ApplyOps — búsqueda de trabajo continua, dirigida y con el clic final humano
 
 [![CI](https://github.com/NicolasAndresCL/ApplyOps/actions/workflows/ci.yml/badge.svg)](https://github.com/NicolasAndresCL/ApplyOps/actions/workflows/ci.yml)
-![Versión](https://img.shields.io/badge/versi%C3%B3n-0.3.1-blue)
+![Versión](https://img.shields.io/badge/versi%C3%B3n-0.4.0-blue)
 ![Python](https://img.shields.io/badge/python-3.14-3776AB)
 
 | | |
 |---|---|
-| **Versión** | 0.3.1 |
+| **Versión** | 0.4.0 |
 | **Fecha** | 25 de noviembre de 2026 |
 | **Autor** | [Nicolás Andrés Cano Leal](#autor) |
 
@@ -20,7 +20,7 @@ siempre lo da una persona ([ADR 0001](docs/adr/0001-fuentes-legitimas-y-clic-hum
 - **Persistencia:** PostgreSQL 16 con SQLAlchemy 2 y migraciones Alembic.
 - **Fuentes:** Get on Board (API pública). Remotive, RemoteOK, Himalayas, We Work Remotely, Torre.ai y
   los ATS públicos de Greenhouse, Lever y Ashby en el hito 5.
-- **Interfaz:** NiceGUI 4 consumiendo la API por HTTP, con los temas de Jaime (Luffy, Zoro y Eren).
+- **Interfaz:** NiceGUI 4 consumiendo la API por HTTP, con los temas de Jaime (Luffy, Zoro y Eren) y el Cian del portafolio.
 - **Todo dockerizado:** imagen multi-stage no-root y Docker Compose (UI + API + PostgreSQL).
 
 **Fuente de verdad:** la tabla `ofertas` en PostgreSQL. Los criterios de búsqueda viven en
@@ -56,7 +56,7 @@ ApplyOps/
 │   │   ├── inbound/ui/          # NiceGUI: otro proceso, habla con la API por HTTP
 │   │   │   ├── cliente.py       # httpx asíncrono con timeout y errores tipados
 │   │   │   ├── vistas.py        # bandeja, detalle, carga manual y ajustes (ui.sub_pages)
-│   │   │   ├── temas/           # paletas y pieles copiadas de Jaime (Mugiwara, Gear 5, Zoro, Eren)
+│   │   │   ├── temas/           # paletas y pieles: Jaime (Mugiwara, Gear 5, Zoro, Eren) + Cian (portafolio)
 │   │   │   └── main.py          # composition root de la UI
 │   │   └── outbound/
 │   │       ├── getonboard.py        # adaptador Get on Board (contrato verificado con fixtures reales)
@@ -122,7 +122,7 @@ python -m applyops.adapters.inbound.ui.main               # UI en :8080 (otra te
 |---|---|---|
 | GET | `/health` | Vivo: responde sin tocar dependencias. |
 | GET | `/ready` | Listo: 200 si la base responde, 503 si no. |
-| GET | `/ofertas` | Bandeja priorizada. Query: `min_puntaje` (0–100), `incluir_descartadas`, `incluir_vencidas`, `limite` (1–500). |
+| GET | `/ofertas` | Bandeja priorizada. Query: `min_puntaje` (0–100), `incluir_descartadas`, `incluir_vencidas`, `idioma` (`es`, `en`, `pt` o `no_indica`), `limite` (1–500). |
 | GET | `/ofertas/{clave}` | Detalle con descripción y desglose del puntaje. |
 | POST | `/ofertas` | Carga a mano una oferta (LinkedIn, Indeed…); 201 con la oferta puntuada. La misma URL actualiza. |
 | POST | `/recolecciones` | Recolecta de todas las fuentes y devuelve el resumen por fuente. |
@@ -147,7 +147,8 @@ Cada respuesta trae `X-Correlation-ID` (se respeta el que envíe el cliente) y l
 ## La interfaz
 
 - **Bandeja:** ofertas de mayor a menor puntaje, con color por tramo (≥ 75 alto, ≥ 50 medio), filtro de
-  puntaje mínimo, «Ver descartadas» (con su motivo) y **Recolectar ahora**.
+  puntaje mínimo, **idioma que pide la oferta** (Get on Board no lo publica en ~6 de cada 10: esas salen con
+  «No indica»), «Ver descartadas» (con su motivo) y **Recolectar ahora**.
 - **Detalle:** datos de la oferta, **por qué tiene ese puntaje** (una barra por componente con su
   explicación) y **Abrir la oferta para postular**, que lleva al portal: el clic final es tuyo.
 - **Cargar oferta:** formulario para ofertas de portales sin API; la API la puntúa igual que a las
@@ -157,6 +158,8 @@ Cada respuesta trae `X-Correlation-ID` (se respeta el que envíe el cliente) y l
   por defecto). Las figuras y emblemas tienen derechos de autor y **no se versionan**:
   `scripts/importar_temas_jaime.ps1` los copia desde tu Jaime local a `assets/temas/`. Sin ellos, cada tema
   se ve con su paleta.
+- **💠 Cian**, la identidad del portafolio: fondo aurora (cian, índigo y magenta), degradado de marca en
+  títulos y menú, y glow en las tarjetas. Es CSS puro: se ve completo sin importar imágenes.
 - **Si la API cae**, cada vista muestra el error con **Reintentar** en vez de romperse.
 
 ## Cómo se puntúa
@@ -204,7 +207,7 @@ nuevo con Python 3.14 (el runner solo ve lo versionado):
 
 1. `ruff check` y `ruff format --check`.
 2. `mypy` estricto (con el plugin de Pydantic).
-3. `pytest` con cobertura mínima del **80 %**: hoy **204 tests, 98,4 %**, en ~14 s. En CI los de
+3. `pytest` con cobertura mínima del **80 %**: hoy **221 tests, 98,4 %**, en ~14 s. En CI los de
    integración corren contra **PostgreSQL 16** (`DATABASE_URL_TEST`); en local, contra SQLite si no está
    definida. El esquema de prueba se crea **con las migraciones**, y un test compara modelos y
    migraciones. Los de la UI usan el `User` simulado de NiceGUI hablando por `httpx.ASGITransport` con la
@@ -247,4 +250,4 @@ Backend Engineer → SRE | Python · Django · Kubernetes · Terraform · CI/CD
 - Portafolio: [nicolasandrescl.github.io](https://nicolasandrescl.github.io/)
 - Correo: [nicolas.cano.leal@gmail.com](mailto:nicolas.cano.leal@gmail.com)
 
-ApplyOps v0.3.1 · 25 de noviembre de 2026
+ApplyOps v0.4.0 · 25 de noviembre de 2026

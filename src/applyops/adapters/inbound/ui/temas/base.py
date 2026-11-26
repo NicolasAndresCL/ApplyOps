@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-# Los cuatro acentos son claros (dorado, blanco Nika, esmeralda, verde titán): tinta oscura.
+# Todos los acentos son claros (dorado, blanco Nika, esmeralda, verde titán, cian): tinta oscura.
 TINTA_SOBRE_ACENTO = "#14100A"
 FUENTE = '"Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif'
 

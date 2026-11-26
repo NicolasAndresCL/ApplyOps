@@ -6,6 +6,29 @@ Todos los cambios relevantes de ApplyOps. Formato
 
 ## [Sin publicar]
 
+## [0.4.0] — 2026-11-25
+
+Filtro por idioma y tema Cian, a partir de la primera prueba de la UI con datos reales.
+
+### Añadido
+- (minor) **Filtro por idioma** en la bandeja y en `GET /ofertas?idioma=` (`es`, `en`, `pt` o `no_indica`
+  para las que no lo publican). La bandeja suma la columna Idioma y el detalle, su píldora; con el filtro
+  puesto y sin resultados, la bandeja lo dice en vez de sugerir recolectar.
+- (minor) **Tema 💠 Cian**, con la paleta del portafolio (`#22D3EE` sobre azul noche): fondo aurora,
+  degradado cian → índigo → magenta en marca, títulos y menú activo, y glow en las tarjetas. Sin imágenes.
+
+### Cambiado
+- `GET /ofertas` devuelve `idioma` en cada oferta (antes solo el detalle). Campo nuevo: compatible.
+
+### Corregido
+Revisión automática (Sourcery) del PR #6:
+- **Una respuesta vieja ya no pisa el filtro actual**: si cambias un filtro antes de que llegue la
+  respuesta anterior, la bandeja solo pinta la del último pedido.
+- **El aviso de bandeja vacía ya no culpa al idioma** cuando la lista la vacía otro filtro: dice
+  «Ninguna oferta calza con los filtros» y sugiere qué cambiar.
+- `FiltroOfertas` rechaza un idioma no soportado al construirse (antes devolvía una lista vacía) e
+  `idioma` va al final de su firma y de `ClienteApi.listar_ofertas`, sin correr la posición de `limite`.
+
 ## [0.3.1] — 2026-11-25
 
 Correcciones de la revisión automática (Sourcery) del PR #3.
