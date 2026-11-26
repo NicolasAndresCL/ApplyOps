@@ -207,7 +207,7 @@ nuevo con Python 3.14 (el runner solo ve lo versionado):
 
 1. `ruff check` y `ruff format --check`.
 2. `mypy` estricto (con el plugin de Pydantic).
-3. `pytest` con cobertura mínima del **80 %**: hoy **212 tests, 98,5 %**, en ~14 s. En CI los de
+3. `pytest` con cobertura mínima del **80 %**: hoy **221 tests, 98,4 %**, en ~14 s. En CI los de
    integración corren contra **PostgreSQL 16** (`DATABASE_URL_TEST`); en local, contra SQLite si no está
    definida. El esquema de prueba se crea **con las migraciones**, y un test compara modelos y
    migraciones. Los de la UI usan el `User` simulado de NiceGUI hablando por `httpx.ASGITransport` con la
