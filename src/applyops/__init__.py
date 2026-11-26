@@ -10,4 +10,4 @@ verifica que coincida con pyproject, README y CHANGELOG.
 Refactor: Nicolás Cano Leal / Fecha: 2026-11-25
 """
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"

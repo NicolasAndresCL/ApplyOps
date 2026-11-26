@@ -6,6 +6,10 @@ Todos los cambios relevantes de ApplyOps. Formato
 
 ## [Sin publicar]
 
+## [0.4.0] — 2026-11-25
+
+Filtro por idioma y tema Cian, a partir de la primera prueba de la UI con datos reales.
+
 ### Añadido
 - (minor) **Filtro por idioma** en la bandeja y en `GET /ofertas?idioma=` (`es`, `en`, `pt` o `no_indica`
   para las que no lo publican). La bandeja suma la columna Idioma y el detalle, su píldora; con el filtro

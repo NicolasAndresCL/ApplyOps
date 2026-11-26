@@ -1,12 +1,12 @@
 # ApplyOps — búsqueda de trabajo continua, dirigida y con el clic final humano
 
 [![CI](https://github.com/NicolasAndresCL/ApplyOps/actions/workflows/ci.yml/badge.svg)](https://github.com/NicolasAndresCL/ApplyOps/actions/workflows/ci.yml)
-![Versión](https://img.shields.io/badge/versi%C3%B3n-0.3.1-blue)
+![Versión](https://img.shields.io/badge/versi%C3%B3n-0.4.0-blue)
 ![Python](https://img.shields.io/badge/python-3.14-3776AB)
 
 | | |
 |---|---|
-| **Versión** | 0.3.1 |
+| **Versión** | 0.4.0 |
 | **Fecha** | 25 de noviembre de 2026 |
 | **Autor** | [Nicolás Andrés Cano Leal](#autor) |
 
@@ -250,4 +250,4 @@ Backend Engineer → SRE | Python · Django · Kubernetes · Terraform · CI/CD
 - Portafolio: [nicolasandrescl.github.io](https://nicolasandrescl.github.io/)
 - Correo: [nicolas.cano.leal@gmail.com](mailto:nicolas.cano.leal@gmail.com)
 
-ApplyOps v0.3.1 · 25 de noviembre de 2026
+ApplyOps v0.4.0 · 25 de noviembre de 2026
