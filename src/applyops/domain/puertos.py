@@ -48,6 +48,8 @@ class FuenteOfertas(Protocol):
 
 # Valor de `FiltroOfertas.idioma` para las ofertas que no indican idioma.
 IDIOMA_NO_INDICA = "no_indica"
+# Valores aceptados por el filtro de idioma (None = no filtrar).
+IDIOMAS_FILTRO = frozenset({"es", "en", "pt", IDIOMA_NO_INDICA})
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,13 +58,20 @@ class FiltroOfertas:
 
     `idioma`: código ISO 639-1 que pide la oferta (`es`, `en`, `pt`),
     `IDIOMA_NO_INDICA` para las que no lo publican, o `None` para no filtrar.
+    Va al final para no correr la posición de `limite` (revisión Sourcery, PR #6), y
+    un valor fuera de `IDIOMAS_FILTRO` falla al construir: un filtro inválido no
+    puede parecer una lista vacía válida.
     """
 
     min_puntaje: int = 0
     incluir_descartadas: bool = False
     incluir_vencidas: bool = False
-    idioma: str | None = None
     limite: int = 50
+    idioma: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.idioma is not None and self.idioma not in IDIOMAS_FILTRO:
+            raise ValueError(f"Idioma de filtro no soportado: {self.idioma!r}")
 
     def acepta_idioma(self, idioma: str | None) -> bool:
         """Regla del filtro de idioma, compartida por los repositorios."""

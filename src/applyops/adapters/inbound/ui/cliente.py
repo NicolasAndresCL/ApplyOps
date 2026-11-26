@@ -57,8 +57,8 @@ class ClienteApi:
         self,
         min_puntaje: int = 0,
         incluir_descartadas: bool = False,
-        idioma: str | None = None,
         limite: int = 500,
+        idioma: str | None = None,
     ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {
             "min_puntaje": min_puntaje,

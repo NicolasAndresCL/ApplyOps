@@ -210,9 +210,12 @@ def tarjeta_error(mensaje: str, reintentar: Callable[[], Awaitable[None]]) -> No
 async def vista_bandeja(cliente: ClienteApi, marcar: Marcar) -> None:
     marcar("/", "Bandeja")
     filtros: dict[str, Any] = {"min_puntaje": 0, "incluir_descartadas": False, "idioma": ""}
+    pedidos = 0  # cada carga toma un número; solo pinta la respuesta del último pedido
 
     async def cargar() -> None:
-        lista.clear()
+        nonlocal pedidos
+        pedidos += 1
+        mio = pedidos
         try:
             ofertas = await cliente.listar_ofertas(
                 min_puntaje=filtros["min_puntaje"],
@@ -220,17 +223,25 @@ async def vista_bandeja(cliente: ClienteApi, marcar: Marcar) -> None:
                 idioma=filtros["idioma"] or None,
             )
         except ApiNoDisponibleError as error:
-            with lista:
-                tarjeta_error(str(error), cargar)
+            if mio == pedidos:
+                lista.clear()
+                with lista:
+                    tarjeta_error(str(error), cargar)
             return
+        if mio != pedidos:
+            # Cambiaron los filtros mientras esperaba: esta respuesta ya no corresponde
+            # (revisión Sourcery, PR #6).
+            return
+        lista.clear()
         with lista:
-            if not ofertas and filtros["idioma"]:
-                # Con el filtro de idioma puesto, «recolecta» sería un consejo equivocado.
+            if not ofertas and (filtros["idioma"] or filtros["min_puntaje"]):
+                # Con filtros puestos, «recolecta» sería un consejo equivocado; y el mensaje
+                # no culpa a un filtro en particular, porque puede ser la combinación.
                 with ui.card().classes("ao-card w-full q-pa-lg").mark("sin-coincidencias"):
-                    ui.label("Ninguna oferta pide ese idioma").classes("text-h6")
-                    ui.label("Cambia el filtro de idioma o baja el puntaje mínimo.").classes(
-                        "ao-dim"
-                    )
+                    ui.label("Ninguna oferta calza con los filtros").classes("text-h6")
+                    ui.label(
+                        "Cambia el idioma, baja el puntaje mínimo o activa «Ver descartadas»."
+                    ).classes("ao-dim")
                 return
             if not ofertas:
                 with ui.card().classes("ao-card w-full q-pa-lg").mark("bandeja-vacia"):

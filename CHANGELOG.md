@@ -20,6 +20,15 @@ Filtro por idioma y tema Cian, a partir de la primera prueba de la UI con datos 
 ### Cambiado
 - `GET /ofertas` devuelve `idioma` en cada oferta (antes solo el detalle). Campo nuevo: compatible.
 
+### Corregido
+Revisión automática (Sourcery) del PR #6:
+- **Una respuesta vieja ya no pisa el filtro actual**: si cambias un filtro antes de que llegue la
+  respuesta anterior, la bandeja solo pinta la del último pedido.
+- **El aviso de bandeja vacía ya no culpa al idioma** cuando la lista la vacía otro filtro: dice
+  «Ninguna oferta calza con los filtros» y sugiere qué cambiar.
+- `FiltroOfertas` rechaza un idioma no soportado al construirse (antes devolvía una lista vacía) e
+  `idioma` va al final de su firma y de `ClienteApi.listar_ofertas`, sin correr la posición de `limite`.
+
 ## [0.3.1] — 2026-11-25
 
 Correcciones de la revisión automática (Sourcery) del PR #3.
